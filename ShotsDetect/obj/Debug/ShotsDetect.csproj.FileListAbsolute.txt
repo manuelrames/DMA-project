@@ -1,0 +1,10 @@
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\bin\Debug\ShotsDetect.exe.config
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\bin\Debug\ShotsDetect.exe
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\bin\Debug\ShotsDetect.pdb
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\bin\Debug\DirectShowLib-2005.dll
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\obj\Debug\ShotsDetect.csprojResolveAssemblyReference.cache
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\obj\Debug\ShotsDetect.Form1.resources
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\obj\Debug\ShotsDetect.Properties.Resources.resources
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\obj\Debug\ShotsDetect.csproj.GenerateResource.Cache
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\obj\Debug\ShotsDetect.exe
+e:\我的文件夹\visual studio 2012\Projects\ShotsDetect\ShotsDetect\obj\Debug\ShotsDetect.pdb

@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2012 for Windows Desktop
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShotsDetect", "ShotsDetect\ShotsDetect.csproj", "{FDB5B54C-F320-4AD3-A4A9-839D2FF322CF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FDB5B54C-F320-4AD3-A4A9-839D2FF322CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDB5B54C-F320-4AD3-A4A9-839D2FF322CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDB5B54C-F320-4AD3-A4A9-839D2FF322CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDB5B54C-F320-4AD3-A4A9-839D2FF322CF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
