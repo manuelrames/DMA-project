@@ -32,12 +32,11 @@
             this.tbFileName = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnStart = new System.Windows.Forms.Button();
-            this.btnPause = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnBrowse
             // 
-            this.btnBrowse.Location = new System.Drawing.Point(12, 12);
+            this.btnBrowse.Location = new System.Drawing.Point(12, 16);
             this.btnBrowse.Name = "btnBrowse";
             this.btnBrowse.Size = new System.Drawing.Size(75, 23);
             this.btnBrowse.TabIndex = 0;
@@ -47,45 +46,37 @@
             // 
             // tbFileName
             // 
-            this.tbFileName.Location = new System.Drawing.Point(93, 13);
+            this.tbFileName.Location = new System.Drawing.Point(93, 17);
             this.tbFileName.Name = "tbFileName";
-            this.tbFileName.Size = new System.Drawing.Size(701, 21);
+            this.tbFileName.Size = new System.Drawing.Size(547, 21);
             this.tbFileName.TabIndex = 1;
             // 
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Location = new System.Drawing.Point(93, 78);
+            this.panel1.Location = new System.Drawing.Point(93, 50);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(701, 357);
+            this.panel1.Size = new System.Drawing.Size(547, 251);
             this.panel1.TabIndex = 2;
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(12, 48);
+            this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.images;
+            this.btnStart.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btnStart.Location = new System.Drawing.Point(54, 159);
             this.btnStart.Name = "btnStart";
-            this.btnStart.Size = new System.Drawing.Size(75, 23);
+            this.btnStart.Size = new System.Drawing.Size(33, 32);
             this.btnStart.TabIndex = 3;
-            this.btnStart.Text = "Start";
             this.btnStart.UseVisualStyleBackColor = true;
             this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
-            // 
-            // btnPause
-            // 
-            this.btnPause.Location = new System.Drawing.Point(102, 48);
-            this.btnPause.Name = "btnPause";
-            this.btnPause.Size = new System.Drawing.Size(75, 23);
-            this.btnPause.TabIndex = 4;
-            this.btnPause.Text = "Pause";
-            this.btnPause.UseVisualStyleBackColor = true;
-            this.btnPause.Click += new System.EventHandler(this.btnPause_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(806, 446);
-            this.Controls.Add(this.btnPause);
+            this.BackgroundImage = global::ShotsDetect.Properties.Resources.form1_background;
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.ClientSize = new System.Drawing.Size(692, 331);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.tbFileName);
@@ -103,7 +94,6 @@
         private System.Windows.Forms.TextBox tbFileName;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button btnStart;
-        private System.Windows.Forms.Button btnPause;
     }
 }
 

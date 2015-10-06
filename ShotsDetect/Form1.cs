@@ -31,33 +31,39 @@ namespace ShotsDetect
         {
             var ofd = new OpenFileDialog();
             if (ofd.ShowDialog() == DialogResult.OK)
+            {
                 tbFileName.Text = ofd.FileName;
+                m_play = new Capture(panel1, tbFileName.Text);
+                m_State = State.Stopped;
+                tbFileName.Enabled = false;
+            }
         }
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            // If we have no file open
-            if (m_play == null)
+            // Only do something if a video is loaded
+            if (m_play != null)
             {
-                // Open the file, provide a handle to play it in
-                m_play = new Capture(panel1, tbFileName.Text);
-
-                // Let us know when the file is finished playing
-                //m_play.StopPlay += new Program.DxPlayEvent(m_play_StopPlay);
-                //m_State = State.Stopped
+                // Depending on the state you have to do a different action
+                switch (m_State) { 
+                    case State.Stopped:
+                        m_play.Start();
+                        m_State = State.Playing;
+                        this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.pause;
+                        break;
+                    case State.Playing:
+                        m_play.Stop();
+                        m_State = State.Paused;
+                        this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.images;
+                        break;
+                    case State.Paused:
+                        m_play.Start();
+                        m_State = State.Playing;
+                        this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.pause;
+                        break;
             }
-
-            //need modify
-            btnStart.Text = "Stop";
-            m_play.Start();
-            btnPause.Enabled = true;
-            tbFileName.Enabled = false;
-            m_State = State.Playing;
+            }
         }
 
-        private void btnPause_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }
