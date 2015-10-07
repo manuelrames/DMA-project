@@ -13,9 +13,17 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            // Make sure to release the Capture object to avoid hanging
+            if (m_play != null)
             {
-                components.Dispose();
+                m_play.Dispose();
+            }
+            if (disposing)
+            {
+                if (components != null)
+                {
+                    components.Dispose();
+                }
             }
             base.Dispose(disposing);
         }
@@ -28,10 +36,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.btnBrowse = new System.Windows.Forms.Button();
             this.tbFileName = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnStart = new System.Windows.Forms.Button();
+            this.tbToltalTime = new System.Windows.Forms.TextBox();
+            this.tbCurrentTime = new System.Windows.Forms.TextBox();
+            this.playTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // btnBrowse
@@ -70,6 +82,30 @@
             this.btnStart.UseVisualStyleBackColor = true;
             this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
             // 
+            // tbToltalTime
+            // 
+            this.tbToltalTime.BackColor = System.Drawing.SystemColors.Window;
+            this.tbToltalTime.Enabled = false;
+            this.tbToltalTime.Location = new System.Drawing.Point(580, 303);
+            this.tbToltalTime.Name = "tbToltalTime";
+            this.tbToltalTime.Size = new System.Drawing.Size(60, 21);
+            this.tbToltalTime.TabIndex = 4;
+            this.tbToltalTime.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // tbCurrentTime
+            // 
+            this.tbCurrentTime.BackColor = System.Drawing.SystemColors.Window;
+            this.tbCurrentTime.Enabled = false;
+            this.tbCurrentTime.Location = new System.Drawing.Point(519, 303);
+            this.tbCurrentTime.Name = "tbCurrentTime";
+            this.tbCurrentTime.Size = new System.Drawing.Size(60, 21);
+            this.tbCurrentTime.TabIndex = 5;
+            this.tbCurrentTime.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // playTimer
+            // 
+            this.playTimer.Tick += new System.EventHandler(this.playTimer_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -77,12 +113,14 @@
             this.BackgroundImage = global::ShotsDetect.Properties.Resources.form1_background;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.ClientSize = new System.Drawing.Size(692, 331);
+            this.Controls.Add(this.tbCurrentTime);
+            this.Controls.Add(this.tbToltalTime);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.tbFileName);
             this.Controls.Add(this.btnBrowse);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "ShotsDetect";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -94,6 +132,9 @@
         private System.Windows.Forms.TextBox tbFileName;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button btnStart;
+        private System.Windows.Forms.TextBox tbToltalTime;
+        private System.Windows.Forms.TextBox tbCurrentTime;
+        private System.Windows.Forms.Timer playTimer;
     }
 }
 

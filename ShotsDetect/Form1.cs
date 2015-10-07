@@ -5,7 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace ShotsDetect
@@ -24,8 +24,11 @@ namespace ShotsDetect
             Paused,
             Playing
         }
+
         State m_State = State.Uninit;
         Capture m_play = null;
+        double m_time;
+        double m_position;
 
         private void btnBrowse_Click(object sender, EventArgs e)
         {
@@ -34,8 +37,13 @@ namespace ShotsDetect
             {
                 tbFileName.Text = ofd.FileName;
                 m_play = new Capture(panel1, tbFileName.Text);
-                m_State = State.Stopped;
                 tbFileName.Enabled = false;
+
+                // Let us know when the file is finished playing
+                m_play.StopPlay += new Capture.CaptureEvent(m_play_StopPlay);
+                m_State = State.Stopped;
+
+                ShowTime();
             }
         }
 
@@ -50,20 +58,62 @@ namespace ShotsDetect
                         m_play.Start();
                         m_State = State.Playing;
                         this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.pause;
+                        playTimer.Start();
                         break;
                     case State.Playing:
                         m_play.Stop();
                         m_State = State.Paused;
                         this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.images;
+                        playTimer.Stop();
                         break;
                     case State.Paused:
                         m_play.Start();
                         m_State = State.Playing;
                         this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.pause;
+                        playTimer.Start();
                         break;
-            }
+                }
             }
         }
 
+        private void ShowTime()
+        {
+            m_play.getTime(out m_position, out m_time);
+            int s = (int)m_time;
+            int h = s / 3600;
+            int m = (s - (h * 3600)) / 60;
+            s = s - (h * 3600 + m * 60);
+            tbToltalTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}", h, m, s);
+
+            s = (int)m_position;
+            h = s / 3600;
+            m = (s - (h * 3600)) / 60;
+            s = s - (h * 3600 + m * 60);
+            tbCurrentTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}", h, m, s);
+        }
+
+        // Called when the video is finished playing
+        private void m_play_StopPlay(Object sender)
+        {
+            // This isn't the right way to do this, but heck, it's only a sample
+            CheckForIllegalCrossThreadCalls = false;
+
+            tbFileName.Enabled = true;
+            this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.images;
+
+            CheckForIllegalCrossThreadCalls = true;
+
+            m_State = State.Stopped;
+
+            // Rewind clip to beginning to allow DxPlay.Start to work again.
+            m_play.Rewind();
+
+            //playTimer.Dispose();
+        }
+
+        private void playTimer_Tick(object sender, EventArgs e)
+        {
+            ShowTime();
+        }
     }
 }

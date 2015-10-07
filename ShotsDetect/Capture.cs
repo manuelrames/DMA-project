@@ -31,6 +31,7 @@ namespace ShotsDetect
         private IFilterGraph2 m_FilterGraph;
         private IMediaControl m_mediaCtrl;
         private IMediaEvent m_mediaEvent;
+        private IMediaPosition m_mediaPosition;
 
         // Used to grab current snapshots
         ISampleGrabber m_sampGrabber = null;
@@ -54,8 +55,8 @@ namespace ShotsDetect
         }
 
         // Event that is called when a clip finishs playing
-        public event DxPlayEvent StopPlay;
-        public delegate void DxPlayEvent(Object sender);
+        public event CaptureEvent StopPlay;
+        public delegate void CaptureEvent(Object sender);
 
         /// <summary>
         /// The main entry point for the application.
@@ -215,6 +216,7 @@ namespace ShotsDetect
                 // Grab some other interfaces
                 m_mediaEvent = m_FilterGraph as IMediaEvent;
                 m_mediaCtrl = m_FilterGraph as IMediaControl;
+                m_mediaPosition = m_FilterGraph as IMediaPosition;
             }
             finally
             {
@@ -302,6 +304,21 @@ namespace ShotsDetect
 
                 m_State = GraphState.Stopped;
             }
+        }
+
+        public void getTime(out double currentPosition, out double durationTime)
+        {
+            m_mediaPosition.get_Duration(out durationTime);
+            m_mediaPosition.get_CurrentPosition(out currentPosition);
+        }
+
+        // Reset the clip back to the beginning
+        public void Rewind()
+        {
+            int hr;
+
+            //IMediaPosition imp = m_FilterGraph as IMediaPosition;
+            hr = m_mediaPosition.put_CurrentPosition(0);
         }
 
         // Shut down capture
