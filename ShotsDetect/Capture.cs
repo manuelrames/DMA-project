@@ -181,6 +181,11 @@ namespace ShotsDetect
         {
             int hr;
 
+            IBaseFilter ibfRenderer = null;
+            IPin iPinInFilter = null;
+            IPin iPinOutFilter = null;
+            IPin iPinInDest = null;
+
             m_FilterGraph = new FilterGraph() as IFilterGraph2;
 
             ICaptureGraphBuilder2 icgb2 = new CaptureGraphBuilder2() as ICaptureGraphBuilder2;
@@ -191,8 +196,11 @@ namespace ShotsDetect
                 DsError.ThrowExceptionForHR(hr);
 
                 IBaseFilter sourceFilter = null;
-                hr = m_FilterGraph.AddSourceFilter(FileName, FileName, out sourceFilter);
+                hr = m_FilterGraph.AddSourceFilter(FileName, "Ds.NET FileFilter", out sourceFilter);
                 DsError.ThrowExceptionForHR( hr );
+
+                // Hopefully this will be the video pin
+                IPin iPinOutSource = DsFindPin.ByDirection(sourceFilter, PinDirection.Output, 0);
 
                 // Get the SampleGrabber interface
                 m_sampGrabber = (ISampleGrabber) new SampleGrabber();
@@ -201,13 +209,27 @@ namespace ShotsDetect
                 // Configure the Sample Grabber
                 ConfigureSampleGrabber(m_sampGrabber);
 
+                iPinInFilter = DsFindPin.ByDirection(baseGrabFlt, PinDirection.Input, 0);
+                iPinOutFilter = DsFindPin.ByDirection(baseGrabFlt, PinDirection.Output, 0);
+
                 // Add it to the filter
                 hr = m_FilterGraph.AddFilter( baseGrabFlt, "Ds.NET Grabber" );
                 DsError.ThrowExceptionForHR( hr );
 
-                // Connect the pieces together, use the default renderer
-                hr = icgb2.RenderStream(null, null, sourceFilter, baseGrabFlt, null);
-                DsError.ThrowExceptionForHR( hr );
+                hr = m_FilterGraph.Connect(iPinOutSource, iPinInFilter);
+                DsError.ThrowExceptionForHR(hr);
+
+                // Get the default video renderer
+                ibfRenderer = (IBaseFilter)new VideoRendererDefault();
+
+                // Add it to the graph
+                hr = m_FilterGraph.AddFilter(ibfRenderer, "Ds.NET VideoRendererDefault");
+                DsError.ThrowExceptionForHR(hr);
+                iPinInDest = DsFindPin.ByDirection(ibfRenderer, PinDirection.Input, 0);
+
+                // Connect the graph.  Many other filters automatically get added here
+                hr = m_FilterGraph.Connect(iPinOutFilter, iPinInDest);
+                DsError.ThrowExceptionForHR(hr);
 
                 // Configure the Video Window
                 IVideoWindow videoWindow = m_FilterGraph as IVideoWindow;

@@ -27,6 +27,7 @@ namespace ShotsDetect
 
         State m_State = State.Uninit;
         Capture m_play = null;
+        ShotsDetect m_detect = null;
         double m_time;
         double m_position;
 
@@ -83,13 +84,12 @@ namespace ShotsDetect
             int h = s / 3600;
             int m = (s - (h * 3600)) / 60;
             s = s - (h * 3600 + m * 60);
-            tbToltalTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}", h, m, s);
 
-            s = (int)m_position;
-            h = s / 3600;
-            m = (s - (h * 3600)) / 60;
-            s = s - (h * 3600 + m * 60);
-            tbCurrentTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}", h, m, s);
+            int s2 = (int)m_position;
+            int h2 = s2 / 3600;
+            int m2 = (s2 - (h2 * 3600)) / 60;
+            s2 = s2 - (h2 * 3600 + m2 * 60);
+            lableTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}/{3:D2}:{4:D2}:{5:D2}", h2, m2, s2, h, m, s);
         }
 
         // Called when the video is finished playing
@@ -113,7 +113,40 @@ namespace ShotsDetect
 
         private void playTimer_Tick(object sender, EventArgs e)
         {
-            ShowTime();
+            if (m_play != null)
+                ShowTime();
+        }
+
+        private void btPDSD_Click(object sender, EventArgs e)
+        {
+            Cursor.Current = Cursors.WaitCursor;
+
+            m_detect = new ShotsDetect(tbFileName.Text);
+            frameTime.Enabled = true;
+            m_detect.Start();
+            m_detect.WaitUntilDone();
+            frameTime.Enabled = false;
+
+            // Final update
+            tbFrameNum.Text = m_detect.m_count.ToString();
+            tbShotsNum.Text = m_detect.m_shots.ToString();
+
+            lock (this)
+            {
+                m_detect.Dispose();
+                m_detect = null;
+            }
+
+            Cursor.Current = Cursors.Default;
+        }
+
+        private void frameTime_Tick(object sender, EventArgs e)
+        {
+            if (m_detect != null)
+            {
+                tbFrameNum.Text = m_detect.m_count.ToString();
+                tbShotsNum.Text = m_detect.m_shots.ToString();
+            }
         }
     }
 }
