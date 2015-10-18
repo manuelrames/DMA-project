@@ -10,6 +10,10 @@ using DirectShowLib;
 
 namespace ShotsDetect
 {
+    
+    /// <summary>
+    ///  Class to stream a video sequence and perform actions with the samples on it (Shot Detection)
+    /// </summary>
     internal class ShotsDetect : ISampleGrabberCB, IDisposable
     {
         #region Member variables
@@ -25,24 +29,44 @@ namespace ShotsDetect
         private int m_videoHeight;
         private int m_stride;
 
-        // Used to grab current snapshots
+        // TODO: look if we need this
+        /// Used(?) to grab current snapshots
         ISampleGrabber m_sampGrabber = null;
 
-        private byte[] preFrame;
+        private IntPtr pFrame;
         public int m_count = 0;
-        private const int threshold1 = 70;
-        private const double threshold2 = 0.5;
         public int m_shots = 0;
+
+        /// <summary>
+        /// The parameters to use in a shot detection algorithm.
+        /// </summary>
+        double p1, p2;
+
+        /// <summary>
+        /// Defines the algorithm that will be used in CBBuffer()
+        /// 0: pixel difference
+        /// 1: motion estimation
+        /// 2: global history
+        /// 3: local history
+        /// 4: generalized method
+        /// </summary>
+        int algorithm;
 
         #endregion
 
         #region API
 
+        /// <summary>
+        /// code used from sample at <href> http://directshownet.sourceforge.net/index.html </href>
+        /// </summary>
         [DllImport("Kernel32.dll", EntryPoint = "RtlMoveMemory")]
         private static extern void CopyMemory(IntPtr Destination, IntPtr Source, [MarshalAs(UnmanagedType.U4)] uint Length);
 
         #endregion
 
+        /// <summary>
+        /// code used from sample at <href> http://directshownet.sourceforge.net/index.html </href>
+        /// </summary>
         public ShotsDetect(string FileName)
         {
             try
@@ -56,7 +80,9 @@ namespace ShotsDetect
             }
         }
 
-        /// <summary> release everything. </summary>
+        /// <summary> 
+        /// release everything.
+        /// </summary>
         public void Dispose()
         {
             CloseInterfaces();
@@ -67,6 +93,9 @@ namespace ShotsDetect
             CloseInterfaces();
         }
 
+        /// <summary>
+        /// code used from sample at <href> http://directshownet.sourceforge.net/index.html </href>
+        /// </summary>
         private void SetupGraph(string FileName)
         {
             int hr;
@@ -88,7 +117,7 @@ namespace ShotsDetect
                 // Add the video source
                 hr = m_FilterGraph.AddSourceFilter(FileName, "Ds.NET FileFilter", out capFilter);
                 DsError.ThrowExceptionForHR(hr);
-   
+
                 // Get the SampleGrabber interface
                 sampGrabber = new SampleGrabber() as ISampleGrabber;
                 baseGrabFlt = sampGrabber as IBaseFilter;
@@ -96,8 +125,8 @@ namespace ShotsDetect
                 ConfigureSampleGrabber(sampGrabber);
 
                 // Add the frame grabber to the graph
-                hr = m_FilterGraph.AddFilter( baseGrabFlt, "Ds.NET Grabber" );
-                DsError.ThrowExceptionForHR( hr );
+                hr = m_FilterGraph.AddFilter(baseGrabFlt, "Ds.NET Grabber");
+                DsError.ThrowExceptionForHR(hr);
 
                 // ---------------------------------
                 // Connect the file filter to the sample grabber
@@ -109,26 +138,26 @@ namespace ShotsDetect
                 IPin iPinIn = DsFindPin.ByDirection(baseGrabFlt, PinDirection.Input, 0);
 
                 hr = m_FilterGraph.Connect(iPinOut, iPinIn);
-                DsError.ThrowExceptionForHR( hr );
+                DsError.ThrowExceptionForHR(hr);
 
                 // Add the null renderer to the graph
                 nullrenderer = new NullRenderer() as IBaseFilter;
-                hr = m_FilterGraph.AddFilter( nullrenderer, "Null renderer" );
-                DsError.ThrowExceptionForHR( hr );
+                hr = m_FilterGraph.AddFilter(nullrenderer, "Null renderer");
+                DsError.ThrowExceptionForHR(hr);
 
                 // ---------------------------------
                 // Connect the sample grabber to the null renderer
 
                 iPinOut = DsFindPin.ByDirection(baseGrabFlt, PinDirection.Output, 0);
                 iPinIn = DsFindPin.ByDirection(nullrenderer, PinDirection.Input, 0);
-                
+
                 hr = m_FilterGraph.Connect(iPinOut, iPinIn);
-                DsError.ThrowExceptionForHR( hr );
+                DsError.ThrowExceptionForHR(hr);
 
                 // Turn off the clock.  This causes the frames to be sent
                 // thru the graph as fast as possible
                 hr = m_mediaFilter.SetSyncSource(null);
-                DsError.ThrowExceptionForHR( hr );
+                DsError.ThrowExceptionForHR(hr);
 
                 // Read and cache the image sizes
                 SaveSizeInfo(sampGrabber);
@@ -153,7 +182,10 @@ namespace ShotsDetect
             }
         }
 
-        /// <summary> Read and store the properties </summary>
+        /// <summary>
+        /// Read and store the properties 
+        /// code used from sample at <href> http://directshownet.sourceforge.net/index.html </href>
+        /// </summary>
         private void SaveSizeInfo(ISampleGrabber sampGrabber)
         {
             int hr;
@@ -174,13 +206,16 @@ namespace ShotsDetect
             m_videoHeight = videoInfoHeader.BmiHeader.Height;
             m_stride = m_videoWidth * (videoInfoHeader.BmiHeader.BitCount / 8);
 
-            preFrame = new byte[m_videoWidth * m_videoHeight];
+            pFrame = Marshal.AllocHGlobal(m_stride * m_videoHeight);
 
             DsUtils.FreeAMMediaType(media);
             media = null;
         }
 
-        /// <summary> Set the options on the sample grabber </summary>
+        /// <summary> 
+        /// Set the options on the sample grabber
+        /// code used from sample at <href> http://directshownet.sourceforge.net/index.html </href>
+        /// </summary>
         private void ConfigureSampleGrabber(ISampleGrabber sampGrabber)
         {
             AMMediaType media;
@@ -218,10 +253,35 @@ namespace ShotsDetect
             return 0;
         }
 
-        /// <summary> buffer callback, COULD BE FROM FOREIGN THREAD. </summary>
+        /// <summary>
+        /// buffer callback, COULD BE FROM FOREIGN THREAD. 
+        /// In this method an algorithm to shot detection will be used
+        /// </summary>
+        /// <param name="SampleTime"></param>
+        /// <param name="pBuffer"></param>
+        /// <param name="BufferLen"></param>
+        /// <returns></returns>
         int ISampleGrabberCB.BufferCB(double SampleTime, IntPtr pBuffer, int BufferLen)
         {
-            PixelDifferenceSD(pBuffer);
+            switch (algorithm)
+            {
+                case 0:
+                    PixelDifferenceSD(pBuffer);
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+
+            }
+
+            m_count++;
+            CopyMemory(pFrame, pBuffer, (uint)BufferLen);
+
             return 0;
         }
 
@@ -273,9 +333,39 @@ namespace ShotsDetect
             DsError.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// method that should be called in a frame to set the parameter
+        /// </summary>
+        /// <param name="p1"></param>
+        public void setP1(double p1)
+        {
+            this.p1 = p1;
+        }
+
+        /// <summary>
+        /// method that should be called in a frame to set the parameter
+        /// </summary>
+        /// <param name="p1"></param>
+        public void setP2(double p2)
+        {
+            this.p2 = p2;
+        }
+
+        /// <summary>
+        /// method that should be called in a frame to set the algorithm to use in BufferCB()
+        /// </summary>
+        /// <param name="p1"></param>
+        public void setAlgorithm(int a)
+        {
+            this.algorithm = a;
+        }
+
         private unsafe void PixelDifferenceSD(IntPtr pBuffer)
         {
+            double threshold1 = p1;
+            double threshold2 = p2;
             Byte* b = (byte*)pBuffer;
+            Byte* b0 = (byte*)pFrame;
             int diff = 0;
 
             for (int x = 0; x < m_videoHeight; x++)
@@ -285,36 +375,32 @@ namespace ShotsDetect
                     for (int c = 0; c < 3; c++)
                     {
                         if (c == 2)
-                        {
-                            if (Math.Abs(preFrame[x * m_videoWidth + y] - *b) > threshold1)
+                            if (Math.Abs(*b0 - *b) > threshold1)
                                 diff++;
-                            preFrame[x * m_videoWidth + y] = *b;
-                        }
                         b++;
+                        b0++;
                     }
                 }
             }
 
             if ((double)diff > m_videoHeight * m_videoWidth * threshold2)
                 m_shots++;
-            
-            m_count++;
         }
 
-        private unsafe void MotionEstimationSD() 
-        { 
+        private unsafe void MotionEstimationSD()
+        {
         }
 
         private unsafe void GlobalHistogramSD()
-        { 
+        {
         }
 
         private unsafe void LocalHistogramSD()
-        { 
+        {
         }
 
         public void GeneralizedSD()
-        { 
+        {
         }
     }
 }

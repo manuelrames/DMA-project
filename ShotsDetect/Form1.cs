@@ -27,10 +27,15 @@ namespace ShotsDetect
 
         State m_State = State.Uninit;
         Capture m_play = null;
-        ShotsDetect m_detect = null;
+
         double m_time;
         double m_position;
 
+        /// <summary>
+        /// Browsing to the video file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnBrowse_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
@@ -48,6 +53,11 @@ namespace ShotsDetect
             }
         }
 
+        /// <summary>
+        /// Play-pause logic
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnStart_Click(object sender, EventArgs e)
         {
             // Only do something if a video is loaded
@@ -89,7 +99,7 @@ namespace ShotsDetect
             int h2 = s2 / 3600;
             int m2 = (s2 - (h2 * 3600)) / 60;
             s2 = s2 - (h2 * 3600 + m2 * 60);
-            lableTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}/{3:D2}:{4:D2}:{5:D2}", h2, m2, s2, h, m, s);
+            labelTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}/{3:D2}:{4:D2}:{5:D2}", h2, m2, s2, h, m, s);
         }
 
         // Called when the video is finished playing
@@ -113,39 +123,30 @@ namespace ShotsDetect
 
         private void playTimer_Tick(object sender, EventArgs e)
         {
-            if (m_play != null)
-                ShowTime();
+            ShowTime();
         }
 
-        private void btPDSD_Click(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
-            Cursor.Current = Cursors.WaitCursor;
 
-            m_detect = new ShotsDetect(tbFileName.Text);
-            frameTime.Enabled = true;
-            m_detect.Start();
-            m_detect.WaitUntilDone();
-            frameTime.Enabled = false;
+        }
 
-            // Final update
-            tbFrameNum.Text = m_detect.m_count.ToString();
-            tbShotsNum.Text = m_detect.m_shots.ToString();
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
 
-            lock (this)
+        }
+
+        // Go to shot detection form
+        private void shotDetectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
             {
-                m_detect.Dispose();
-                m_detect = null;
+                Form2 algo_form = new Form2(tbFileName.Text);
+                algo_form.Show();
             }
-
-            Cursor.Current = Cursors.Default;
-        }
-
-        private void frameTime_Tick(object sender, EventArgs e)
-        {
-            if (m_detect != null)
+            catch (Exception exception)
             {
-                tbFrameNum.Text = m_detect.m_count.ToString();
-                tbShotsNum.Text = m_detect.m_shots.ToString();
+                MessageBox.Show("First a file must be loaded. Click Browse.");
             }
         }
     }

@@ -42,18 +42,15 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnStart = new System.Windows.Forms.Button();
             this.playTimer = new System.Windows.Forms.Timer(this.components);
-            this.lableTime = new System.Windows.Forms.Label();
-            this.btPDSD = new System.Windows.Forms.Button();
-            this.labelFrameNumber = new System.Windows.Forms.Label();
-            this.tbFrameNum = new System.Windows.Forms.TextBox();
-            this.frameTime = new System.Windows.Forms.Timer(this.components);
-            this.labelShotsNum = new System.Windows.Forms.Label();
-            this.tbShotsNum = new System.Windows.Forms.TextBox();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.shotDetectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.labelTime = new System.Windows.Forms.Label();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnBrowse
             // 
-            this.btnBrowse.Location = new System.Drawing.Point(12, 16);
+            this.btnBrowse.Location = new System.Drawing.Point(12, 46);
             this.btnBrowse.Name = "btnBrowse";
             this.btnBrowse.Size = new System.Drawing.Size(75, 23);
             this.btnBrowse.TabIndex = 0;
@@ -63,24 +60,24 @@
             // 
             // tbFileName
             // 
-            this.tbFileName.Location = new System.Drawing.Point(93, 17);
+            this.tbFileName.Location = new System.Drawing.Point(118, 46);
             this.tbFileName.Name = "tbFileName";
-            this.tbFileName.Size = new System.Drawing.Size(547, 21);
+            this.tbFileName.Size = new System.Drawing.Size(522, 21);
             this.tbFileName.TabIndex = 1;
             // 
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Location = new System.Drawing.Point(12, 75);
+            this.panel1.Location = new System.Drawing.Point(118, 70);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(547, 277);
+            this.panel1.Size = new System.Drawing.Size(522, 231);
             this.panel1.TabIndex = 2;
             // 
             // btnStart
             // 
             this.btnStart.BackgroundImage = global::ShotsDetect.Properties.Resources.images;
             this.btnStart.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btnStart.Location = new System.Drawing.Point(12, 352);
+            this.btnStart.Location = new System.Drawing.Point(54, 159);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(33, 32);
             this.btnStart.TabIndex = 3;
@@ -91,62 +88,31 @@
             // 
             this.playTimer.Tick += new System.EventHandler(this.playTimer_Tick);
             // 
-            // lableTime
+            // menuStrip1
             // 
-            this.lableTime.AutoSize = true;
-            this.lableTime.Location = new System.Drawing.Point(452, 355);
-            this.lableTime.Name = "lableTime";
-            this.lableTime.Size = new System.Drawing.Size(107, 12);
-            this.lableTime.TabIndex = 6;
-            this.lableTime.Text = "00:00:00/00:00:00";
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.shotDetectionToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(692, 24);
+            this.menuStrip1.TabIndex = 6;
+            this.menuStrip1.Text = "menuStrip1";
             // 
-            // btPDSD
+            // shotDetectionToolStripMenuItem
             // 
-            this.btPDSD.Location = new System.Drawing.Point(12, 46);
-            this.btPDSD.Name = "btPDSD";
-            this.btPDSD.Size = new System.Drawing.Size(75, 23);
-            this.btPDSD.TabIndex = 7;
-            this.btPDSD.Text = "PDSD";
-            this.btPDSD.UseVisualStyleBackColor = true;
-            this.btPDSD.Click += new System.EventHandler(this.btPDSD_Click);
+            this.shotDetectionToolStripMenuItem.Name = "shotDetectionToolStripMenuItem";
+            this.shotDetectionToolStripMenuItem.Size = new System.Drawing.Size(97, 20);
+            this.shotDetectionToolStripMenuItem.Text = "Shot Detection";
+            this.shotDetectionToolStripMenuItem.Click += new System.EventHandler(this.shotDetectionToolStripMenuItem_Click);
             // 
-            // labelFrameNumber
+            // labelTime
             // 
-            this.labelFrameNumber.AutoSize = true;
-            this.labelFrameNumber.Location = new System.Drawing.Point(565, 75);
-            this.labelFrameNumber.Name = "labelFrameNumber";
-            this.labelFrameNumber.Size = new System.Drawing.Size(59, 12);
-            this.labelFrameNumber.TabIndex = 8;
-            this.labelFrameNumber.Text = "Frame Num";
-            // 
-            // tbFrameNum
-            // 
-            this.tbFrameNum.Enabled = false;
-            this.tbFrameNum.Location = new System.Drawing.Point(565, 90);
-            this.tbFrameNum.Name = "tbFrameNum";
-            this.tbFrameNum.Size = new System.Drawing.Size(119, 21);
-            this.tbFrameNum.TabIndex = 9;
-            // 
-            // frameTime
-            // 
-            this.frameTime.Tick += new System.EventHandler(this.frameTime_Tick);
-            // 
-            // labelShotsNum
-            // 
-            this.labelShotsNum.AutoSize = true;
-            this.labelShotsNum.Location = new System.Drawing.Point(567, 118);
-            this.labelShotsNum.Name = "labelShotsNum";
-            this.labelShotsNum.Size = new System.Drawing.Size(59, 12);
-            this.labelShotsNum.TabIndex = 10;
-            this.labelShotsNum.Text = "Shots Num";
-            // 
-            // tbShotsNum
-            // 
-            this.tbShotsNum.Enabled = false;
-            this.tbShotsNum.Location = new System.Drawing.Point(565, 134);
-            this.tbShotsNum.Name = "tbShotsNum";
-            this.tbShotsNum.Size = new System.Drawing.Size(119, 21);
-            this.tbShotsNum.TabIndex = 11;
+            this.labelTime.AutoSize = true;
+            this.labelTime.Location = new System.Drawing.Point(533, 304);
+            this.labelTime.Name = "labelTime";
+            this.labelTime.Size = new System.Drawing.Size(107, 12);
+            this.labelTime.TabIndex = 7;
+            this.labelTime.Text = "00:00:00/00:00:00";
             // 
             // Form1
             // 
@@ -154,19 +120,19 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = global::ShotsDetect.Properties.Resources.form1_background;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.ClientSize = new System.Drawing.Size(743, 396);
-            this.Controls.Add(this.tbShotsNum);
-            this.Controls.Add(this.labelShotsNum);
-            this.Controls.Add(this.btPDSD);
-            this.Controls.Add(this.tbFrameNum);
-            this.Controls.Add(this.labelFrameNumber);
-            this.Controls.Add(this.lableTime);
+            this.ClientSize = new System.Drawing.Size(692, 331);
+            this.Controls.Add(this.labelTime);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.tbFileName);
             this.Controls.Add(this.btnBrowse);
+            this.Controls.Add(this.menuStrip1);
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
             this.Text = "ShotsDetect";
+            this.Load += new System.EventHandler(this.Form1_Load);
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -179,13 +145,9 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.Timer playTimer;
-        private System.Windows.Forms.Label lableTime;
-        private System.Windows.Forms.Button btPDSD;
-        private System.Windows.Forms.Label labelFrameNumber;
-        private System.Windows.Forms.TextBox tbFrameNum;
-        private System.Windows.Forms.Timer frameTime;
-        private System.Windows.Forms.Label labelShotsNum;
-        private System.Windows.Forms.TextBox tbShotsNum;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem shotDetectionToolStripMenuItem;
+        private System.Windows.Forms.Label labelTime;
     }
 }
 
