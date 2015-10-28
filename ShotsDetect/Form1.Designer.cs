@@ -17,6 +17,7 @@
             if (m_play != null)
             {
                 m_play.Dispose();
+                m_play = null;
             }
             if (disposing)
             {
@@ -45,6 +46,12 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.shotDetectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.labelTime = new System.Windows.Forms.Label();
+            this.lbPlay = new System.Windows.Forms.ListBox();
+            this.tbTags = new System.Windows.Forms.TextBox();
+            this.btAdd = new System.Windows.Forms.Button();
+            this.btExport = new System.Windows.Forms.Button();
+            this.lbTags = new System.Windows.Forms.ListBox();
+            this.btDel = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -94,7 +101,7 @@
             this.shotDetectionToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(692, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(846, 24);
             this.menuStrip1.TabIndex = 6;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -114,13 +121,75 @@
             this.labelTime.TabIndex = 7;
             this.labelTime.Text = "00:00:00/00:00:00";
             // 
+            // lbPlay
+            // 
+            this.lbPlay.FormattingEnabled = true;
+            this.lbPlay.ItemHeight = 12;
+            this.lbPlay.Location = new System.Drawing.Point(118, 327);
+            this.lbPlay.Name = "lbPlay";
+            this.lbPlay.Size = new System.Drawing.Size(522, 88);
+            this.lbPlay.TabIndex = 8;
+            this.lbPlay.SelectedIndexChanged += new System.EventHandler(this.lbPlay_SelectedIndexChanged);
+            // 
+            // tbTags
+            // 
+            this.tbTags.Location = new System.Drawing.Point(655, 46);
+            this.tbTags.Name = "tbTags";
+            this.tbTags.Size = new System.Drawing.Size(183, 21);
+            this.tbTags.TabIndex = 9;
+            // 
+            // btAdd
+            // 
+            this.btAdd.Location = new System.Drawing.Point(655, 70);
+            this.btAdd.Name = "btAdd";
+            this.btAdd.Size = new System.Drawing.Size(93, 23);
+            this.btAdd.TabIndex = 10;
+            this.btAdd.Text = "add";
+            this.btAdd.UseVisualStyleBackColor = true;
+            this.btAdd.Click += new System.EventHandler(this.btAdd_Click);
+            // 
+            // btExport
+            // 
+            this.btExport.Location = new System.Drawing.Point(655, 349);
+            this.btExport.Name = "btExport";
+            this.btExport.Size = new System.Drawing.Size(98, 23);
+            this.btExport.TabIndex = 12;
+            this.btExport.Text = "Export to XML";
+            this.btExport.UseVisualStyleBackColor = true;
+            this.btExport.Click += new System.EventHandler(this.btExport_Click);
+            // 
+            // lbTags
+            // 
+            this.lbTags.FormattingEnabled = true;
+            this.lbTags.ItemHeight = 12;
+            this.lbTags.Location = new System.Drawing.Point(655, 99);
+            this.lbTags.Name = "lbTags";
+            this.lbTags.Size = new System.Drawing.Size(183, 244);
+            this.lbTags.TabIndex = 13;
+            // 
+            // btDel
+            // 
+            this.btDel.Location = new System.Drawing.Point(754, 70);
+            this.btDel.Name = "btDel";
+            this.btDel.Size = new System.Drawing.Size(84, 23);
+            this.btDel.TabIndex = 14;
+            this.btDel.Text = "delete";
+            this.btDel.UseVisualStyleBackColor = true;
+            this.btDel.Click += new System.EventHandler(this.btDel_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = global::ShotsDetect.Properties.Resources.form1_background;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.ClientSize = new System.Drawing.Size(692, 331);
+            this.ClientSize = new System.Drawing.Size(846, 426);
+            this.Controls.Add(this.btDel);
+            this.Controls.Add(this.lbTags);
+            this.Controls.Add(this.btExport);
+            this.Controls.Add(this.btAdd);
+            this.Controls.Add(this.tbTags);
+            this.Controls.Add(this.lbPlay);
             this.Controls.Add(this.labelTime);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.panel1);
@@ -148,6 +217,12 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem shotDetectionToolStripMenuItem;
         private System.Windows.Forms.Label labelTime;
+        private System.Windows.Forms.ListBox lbPlay;
+        private System.Windows.Forms.TextBox tbTags;
+        private System.Windows.Forms.Button btAdd;
+        private System.Windows.Forms.Button btExport;
+        private System.Windows.Forms.ListBox lbTags;
+        private System.Windows.Forms.Button btDel;
     }
 }
 

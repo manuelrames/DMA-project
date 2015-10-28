@@ -16,21 +16,28 @@ namespace ShotsDetect
         enum State { pxl_diff=0, mot_est=1, gl_hist=2, loc_hist=3, gen=4}
 
         State algorithm=State.pxl_diff;
+
+        string Filename;
         
         ShotsDetect m_detect;
+
+        Form1 form1;
+
+        int time;
+
+        public List<Shot> shots = new List<Shot>();
 
         public Form2()
         {
             InitializeComponent();
         }
 
-        public Form2(string p)
+        public Form2(Form1 f, string p)
         {
             InitializeComponent();
-            m_detect = new ShotsDetect(p);
+            Filename = p;
+            this.form1 = f;
         }
-
-
 
         private void Form2_Load(object sender, EventArgs e)
         {
@@ -57,41 +64,56 @@ namespace ShotsDetect
         /// <param name="e"></param>
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
+            /* initailize the textboxes */
+            tbP1.Text = "";
+            tbP2.Text = "";
+            tbFrameNum.Text = "";
+            tbShotsNum.Text = "";
+            tbTime.Text = "00:00:00";
+
             if (cbAlgorithm.SelectedItem.ToString().Equals("Pixel Difference"))
             {
                 algorithm = State.pxl_diff;
-                p1.Text = "treshold 1";
-                p2.Text = "treshold 2";
+                p1.Text = "threshold 1";
+                p2.Text = "threshold 2";
                 alg_expl.Text = "Calculate pixel-wise differences in video.";
-                p1_expl.Text = "Treshold for pixel difference to count.";
-                p2_expl.Text = "Treshold for 2 frames to be counted as a shot transition. High values result in less shot transitions to be found";
+                p1_expl.Text = "Threshold 1: Treshold for pixel difference to count.";
+                p2_expl.Text = "Threshold 2: Treshold for 2 frames to be counted as a shot transition.\nHigh values result in less shot transitions to be found";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Motion Estimation"))
             {
                 algorithm = State.mot_est;
-                p1.Text = "";
-                p2.Text = "";
-                alg_expl.Text = "";
-                p1_expl.Text = "";
-                p2_expl.Text = "";
+                p1.Text = "threshold1";
+                p2.Text = "search method";
+                alg_expl.Text = "Analyzes the motion between two consecutive frames";
+                p1_expl.Text = "Threshold 1: the difference between two frames";
+                p2_expl.Text = "Search method: 1 for simple block search, 2 for diamond search";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Global Histogram"))
             {
                 algorithm = State.gl_hist;
-                p1.Text = "";
-                p2.Text = "";
-                alg_expl.Text = "";
-                p1_expl.Text = "";
-                p2_expl.Text = "";
+                p1.Text = "Threshold 1";
+                p2.Text = "Threshold 2";
+                //tbP1.Text = "0,7";
+                //tbP1.Enabled = false;
+                tbP2.Text = "0";
+                tbP2.Enabled = false;
+                alg_expl.Text = "Calculate frame histogram differences in video.";
+                p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.";
+                p2_expl.Text = "A second threshold is not needed for Global Histogram Comparison algorithm.";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Local Histogram"))
             {
                 algorithm = State.loc_hist;
-                p1.Text = "";
-                p2.Text = "";
-                alg_expl.Text = "";
-                p1_expl.Text = "";
-                p2_expl.Text = "";
+                p1.Text = "Threshold 1";
+                p2.Text = "Threshold 2";
+                //tbP1.Text = "";
+                //tbP1.Enabled = false;
+                tbP2.Text = "0";
+                tbP2.Enabled = false;
+                alg_expl.Text = "Calculate frame local histogram differences in video.";
+                p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.";
+                p2_expl.Text = "A second threshold is not needed for Local Histogram Comparison algorithm.";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Generalized"))
             {
@@ -114,6 +136,18 @@ namespace ShotsDetect
         ///  (Use a different thread to do the algorithm?) </bug>
         private void button1_Click(object sender, EventArgs e)
         {
+            try
+            {
+                m_detect = new ShotsDetect(Filename, this);
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show("File name error.\nPlease select a correct file.");
+                Dispose();
+                return;
+            }
+            shots.Clear();
+
             m_detect.setAlgorithm((int)algorithm);
             try
             {
@@ -122,9 +156,12 @@ namespace ShotsDetect
 
                 Cursor.Current = Cursors.WaitCursor;
                 frameTime.Enabled = true;
+                bLoad.Enabled = false;
+                time = 0;
                 m_detect.Start();
                 m_detect.WaitUntilDone();
                 frameTime.Enabled = false;
+                bLoad.Enabled = true;
 
                 // Final update
                 tbFrameNum.Text = m_detect.m_count.ToString();
@@ -151,7 +188,29 @@ namespace ShotsDetect
             {
                 tbFrameNum.Text = m_detect.m_count.ToString();
                 tbShotsNum.Text = m_detect.m_shots.ToString();
+
+                time++;
+                calTime(time);
             }
+        }
+
+        /// <summary>
+        /// This function use to calculate the algorithm's operating time
+        /// </summary>
+        /// <param name="time">the counter of the timer, every 100ms the counter increase 1</param>
+        private void calTime(int time)
+        {
+            int s = time / 10;
+            int h = s / 3600;
+            int m = (s - (h * 3600)) / 60;
+            s = s - (h * 3600 + m * 60);
+
+            tbTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}", h, m, s);
+        }
+
+        private void bLoad_Click(object sender, EventArgs e)
+        {
+            form1.updateLbPlay(this.shots);
         }
     }
 }

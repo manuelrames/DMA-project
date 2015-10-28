@@ -44,6 +44,9 @@
             this.tbFrameNum = new System.Windows.Forms.TextBox();
             this.tbShotsNum = new System.Windows.Forms.TextBox();
             this.frameTime = new System.Windows.Forms.Timer(this.components);
+            this.bLoad = new System.Windows.Forms.Button();
+            this.tbTime = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // tbP1
@@ -63,7 +66,7 @@
             // p1
             // 
             this.p1.AutoSize = true;
-            this.p1.Location = new System.Drawing.Point(34, 85);
+            this.p1.Location = new System.Drawing.Point(24, 85);
             this.p1.Name = "p1";
             this.p1.Size = new System.Drawing.Size(65, 12);
             this.p1.TabIndex = 2;
@@ -72,7 +75,7 @@
             // p2
             // 
             this.p2.AutoSize = true;
-            this.p2.Location = new System.Drawing.Point(34, 126);
+            this.p2.Location = new System.Drawing.Point(24, 129);
             this.p2.Name = "p2";
             this.p2.Size = new System.Drawing.Size(65, 12);
             this.p2.TabIndex = 3;
@@ -175,11 +178,42 @@
             // 
             this.frameTime.Tick += new System.EventHandler(this.frameTime_Tick);
             // 
+            // bLoad
+            // 
+            this.bLoad.Location = new System.Drawing.Point(335, 162);
+            this.bLoad.Name = "bLoad";
+            this.bLoad.Size = new System.Drawing.Size(75, 21);
+            this.bLoad.TabIndex = 14;
+            this.bLoad.Text = "Load";
+            this.bLoad.UseVisualStyleBackColor = true;
+            this.bLoad.Click += new System.EventHandler(this.bLoad_Click);
+            // 
+            // tbTime
+            // 
+            this.tbTime.Enabled = false;
+            this.tbTime.Location = new System.Drawing.Point(324, 49);
+            this.tbTime.Name = "tbTime";
+            this.tbTime.Size = new System.Drawing.Size(100, 21);
+            this.tbTime.TabIndex = 15;
+            this.tbTime.Text = "00:00:00";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(275, 52);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(29, 12);
+            this.label3.TabIndex = 16;
+            this.label3.Text = "time";
+            // 
             // Form2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(486, 332);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.tbTime);
+            this.Controls.Add(this.bLoad);
             this.Controls.Add(this.tbShotsNum);
             this.Controls.Add(this.tbFrameNum);
             this.Controls.Add(this.label2);
@@ -219,5 +253,8 @@
         private System.Windows.Forms.TextBox tbFrameNum;
         private System.Windows.Forms.TextBox tbShotsNum;
         private System.Windows.Forms.Timer frameTime;
+        private System.Windows.Forms.Button bLoad;
+        private System.Windows.Forms.TextBox tbTime;
+        private System.Windows.Forms.Label label3;
     }
 }

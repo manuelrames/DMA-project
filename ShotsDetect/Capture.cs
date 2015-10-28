@@ -366,6 +366,35 @@ namespace ShotsDetect
             }
         }
 
+        public void Start(double start, double end)
+        {
+            // If we aren't already playing (or shutting down)
+            if (m_State == GraphState.Stopped || m_State == GraphState.Paused)
+            {
+                m_mediaPosition.put_CurrentPosition(start);
+                m_mediaPosition.put_StopTime(end);
+                int hr = m_mediaCtrl.Run();
+                DsError.ThrowExceptionForHR(hr);
+
+                m_State = GraphState.Running;
+            }
+        }
+
+        public void setStartTime(double start)
+        {
+            m_mediaPosition.put_CurrentPosition(start);
+        }
+
+        public void setEndTime(double end)
+        {
+            m_mediaPosition.put_StopTime(end);
+        }
+
+        public IMediaPosition getMediaPosition()
+        {
+            return m_mediaPosition;
+        }
+
         public void Stop()
         {
             // Can only Stop when playing or paused
@@ -428,6 +457,18 @@ namespace ShotsDetect
                 {
                     Marshal.ReleaseComObject(m_FilterGraph);
                     m_FilterGraph = null;
+                }
+
+                if (m_mediaPosition != null)
+                {
+                    Marshal.ReleaseComObject(m_mediaPosition);
+                    m_mediaPosition = null;
+                }
+
+                if (m_mediaEvent != null)
+                {
+                    Marshal.ReleaseComObject(m_mediaEvent);
+                    m_mediaEvent = null;
                 }
             }
             GC.Collect();
