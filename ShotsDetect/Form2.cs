@@ -76,6 +76,8 @@ namespace ShotsDetect
                 algorithm = State.pxl_diff;
                 p1.Text = "threshold 1";
                 p2.Text = "threshold 2";
+                tbP2.Enabled = true;
+                tbP2.Visible = true;
                 alg_expl.Text = "Calculate pixel-wise differences in video.";
                 p1_expl.Text = "Threshold 1: Treshold for pixel difference to count.";
                 p2_expl.Text = "Threshold 2: Treshold for 2 frames to be counted as a shot transition.\nHigh values result in less shot transitions to be found";
@@ -85,6 +87,8 @@ namespace ShotsDetect
                 algorithm = State.mot_est;
                 p1.Text = "threshold1";
                 p2.Text = "search method";
+                tbP2.Enabled = true;
+                tbP2.Visible = true;
                 alg_expl.Text = "Analyzes the motion between two consecutive frames";
                 p1_expl.Text = "Threshold 1: the difference between two frames";
                 p2_expl.Text = "Search method: 1 for simple block search, 2 for diamond search";
@@ -92,28 +96,30 @@ namespace ShotsDetect
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Global Histogram"))
             {
                 algorithm = State.gl_hist;
-                p1.Text = "Threshold 1";
-                p2.Text = "Threshold 2";
+                p1.Text = "Bhatt. Coeff.";
+                p2.Text = "";
                 //tbP1.Text = "0,7";
                 //tbP1.Enabled = false;
                 tbP2.Text = "0";
                 tbP2.Enabled = false;
+                tbP2.Visible = false;
                 alg_expl.Text = "Calculate frame histogram differences in video.";
                 p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.";
-                p2_expl.Text = "A second threshold is not needed for Global Histogram Comparison algorithm.";
+                p2_expl.Text = "";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Local Histogram"))
             {
                 algorithm = State.loc_hist;
-                p1.Text = "Threshold 1";
-                p2.Text = "Threshold 2";
+                p1.Text = "Bhatt. Coeff.";
+                p2.Text = "";
                 //tbP1.Text = "";
                 //tbP1.Enabled = false;
                 tbP2.Text = "0";
                 tbP2.Enabled = false;
+                tbP2.Visible = false;
                 alg_expl.Text = "Calculate frame local histogram differences in video.";
                 p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.";
-                p2_expl.Text = "A second threshold is not needed for Local Histogram Comparison algorithm.";
+                p2_expl.Text = "";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Generalized"))
             {
@@ -136,6 +142,7 @@ namespace ShotsDetect
         ///  (Use a different thread to do the algorithm?) </bug>
         private void button1_Click(object sender, EventArgs e)
         {
+            this.pbShotDetect.Visible = true;
             try
             {
                 m_detect = new ShotsDetect(Filename, this);
@@ -156,16 +163,29 @@ namespace ShotsDetect
 
                 Cursor.Current = Cursors.WaitCursor;
                 frameTime.Enabled = true;
+                button1.Enabled = false;
                 bLoad.Enabled = false;
+                tbP1.Enabled = false;
+                tbP2.Enabled = false;
                 time = 0;
+
                 m_detect.Start();
                 m_detect.WaitUntilDone();
+
                 frameTime.Enabled = false;
                 bLoad.Enabled = true;
+                button1.Enabled = true;
+                tbP1.Enabled = true;
+                tbP2.Enabled = true;
 
                 // Final update
+                calTime(time);
                 tbFrameNum.Text = m_detect.m_count.ToString();
                 tbShotsNum.Text = m_detect.m_shots.ToString();
+
+                //add the last shot
+                shots.Add(m_detect.createShot(m_detect.m_count - m_detect.frame_counter, 
+                            m_detect.m_count - 1, m_detect.current_start_shot, form1.duration));
 
                 lock (this)
                 {
@@ -179,6 +199,9 @@ namespace ShotsDetect
             {
                 MessageBox.Show("Please fill in an integer or a double to execute this Shot Detection");
             }
+
+            this.pbShotDetect.Visible = false;
+            this.pbShotDetect.Value = 0;
 
         }
 
@@ -208,9 +231,19 @@ namespace ShotsDetect
             tbTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}", h, m, s);
         }
 
+        public ProgressBar getPbShotDetect()
+        {
+            return this.pbShotDetect;
+        }
+
         private void bLoad_Click(object sender, EventArgs e)
         {
             form1.updateLbPlay(this.shots);
+        }
+
+        private void pbShotDetect_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

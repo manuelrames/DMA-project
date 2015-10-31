@@ -37,6 +37,12 @@ namespace ShotsDetect
         private IMediaEvent m_mediaEvent;
         private IMediaPosition m_mediaPosition;
 
+        /// <summary>
+        ///  not the same as 'starttime'. this variable makes sure that after the end of playing a shot,
+        ///  the pointer of the player directs at the start of the selected shot in form1
+        /// </summary> 
+        private double m_startPosition=0.0;
+
         /// <summary> Dimensions of the image, calculated once in constructor. </summary>
         private int m_videoWidth;
         private int m_videoHeight;
@@ -174,6 +180,7 @@ namespace ShotsDetect
                                 {
                                     StopPlay(this);
                                 }
+                                this.m_mediaPosition.put_CurrentPosition(m_startPosition);
                             }
 
                             // Release any resources the message allocated
@@ -385,6 +392,11 @@ namespace ShotsDetect
             m_mediaPosition.put_CurrentPosition(start);
         }
 
+        public void setStartPosition(double start)
+        {
+            this.m_startPosition = start;
+        }
+
         public void setEndTime(double end)
         {
             m_mediaPosition.put_StopTime(end);
@@ -400,8 +412,11 @@ namespace ShotsDetect
             // Can only Stop when playing or paused
             if (m_State == GraphState.Running || m_State == GraphState.Paused)
             {
+
                 int hr = m_mediaCtrl.Stop();
                 DsError.ThrowExceptionForHR(hr);
+
+                
 
                 m_State = GraphState.Stopped;
             }

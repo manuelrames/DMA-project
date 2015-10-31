@@ -43,7 +43,7 @@ namespace ShotsDetect
         /// <summary>
         /// duration of the media stream
         /// </summary>
-        double duration;
+        public double duration;
 
         /// <summary>
         /// saving all the shots produced in the session => are in the listbox lbPlay
@@ -208,8 +208,7 @@ namespace ShotsDetect
             for (int i = 0; i < shots.Count; i++)
             {
                 Shot s = shots[i];
-                lbPlay.Items.Add("Shot " + (i+1).ToString() + ": " + s.start.ToString() + "-" + s.end.ToString()
-                + ": frame #" + s.frame1.ToString()+ "-> #" + s.frame2.ToString());
+                lbPlay.Items.Add(string.Format("Shot{0}:{1:N}-{2:N}  Frame #{3}-> #{4}", i+1, s.start, s.end, s.frame1, s.frame2));
                 lbShots.Add(s);
 
                 //store the shot to ShotInfo for exporting xml file
@@ -230,6 +229,8 @@ namespace ShotsDetect
                 m_play.setStartTime(lbShots[index - 1].start);
                 m_play.setEndTime(lbShots[index - 1].end);
 
+                m_play.setStartPosition(lbShots[index - 1].start);
+
                 /* update the tags listbox info */
                 lbTags.Items.Clear();
                 if (m_Shotinfo[index - 1].tags != null)
@@ -245,6 +246,8 @@ namespace ShotsDetect
             {
                 m_play.setStartTime(0.0);
                 m_play.setEndTime(duration);
+
+                m_play.setStartPosition(0.0);
             }
         }
 
@@ -294,7 +297,7 @@ namespace ShotsDetect
             }
             else if (lbPlay.SelectedIndex <= 0)
             {
-                MessageBox.Show("Please select one shot which you want to add tags!");
+                MessageBox.Show("Please select one shot to which you want to add tags!");
             }
             else
             {
