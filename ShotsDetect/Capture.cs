@@ -10,9 +10,13 @@ using System.Windows.Forms;
 
 using DirectShowLib;
 
+/// <summary>
+/// code in this file used from sample at <href> http://directshownet.sourceforge.net/index.html </href>
+/// </summary>
+
 namespace ShotsDetect
 {
-    internal class Capture : IDisposable
+    internal class Capture : IDisposable , ISampleGrabberCB
     {
         enum GraphState
         {
@@ -33,6 +37,17 @@ namespace ShotsDetect
         private IMediaEvent m_mediaEvent;
         private IMediaPosition m_mediaPosition;
 
+        /// <summary>
+        ///  not the same as 'starttime'. this variable makes sure that after the end of playing a shot,
+        ///  the pointer of the player directs at the start of the selected shot in form1
+        /// </summary> 
+        private double m_startPosition=0.0;
+
+        /// <summary> Dimensions of the image, calculated once in constructor. </summary>
+        private int m_videoWidth;
+        private int m_videoHeight;
+        private int m_stride;
+
         // Used to grab current snapshots
         ISampleGrabber m_sampGrabber = null;
 
@@ -41,6 +56,18 @@ namespace ShotsDetect
 
         // Current state of the graph (can change async)
         volatile private GraphState m_State = GraphState.Stopped;
+
+#if DEBUG
+        // Allow you to "Connect to remote graph" from GraphEdit
+        DsROTEntry m_rot = null;
+#endif
+
+        #endregion
+
+        #region API
+
+        [DllImport("Kernel32.dll", EntryPoint = "RtlMoveMemory")]
+        private static extern void CopyMemory(IntPtr Destination, IntPtr Source, [MarshalAs(UnmanagedType.U4)] uint Length);
 
         #endregion
 
@@ -153,6 +180,7 @@ namespace ShotsDetect
                                 {
                                     StopPlay(this);
                                 }
+                                this.m_mediaPosition.put_CurrentPosition(m_startPosition);
                             }
 
                             // Release any resources the message allocated
@@ -181,6 +209,11 @@ namespace ShotsDetect
         {
             int hr;
 
+            IBaseFilter ibfRenderer = null;
+            IPin iPinInFilter = null;
+            IPin iPinOutFilter = null;
+            IPin iPinInDest = null;
+
             m_FilterGraph = new FilterGraph() as IFilterGraph2;
 
             ICaptureGraphBuilder2 icgb2 = new CaptureGraphBuilder2() as ICaptureGraphBuilder2;
@@ -191,23 +224,40 @@ namespace ShotsDetect
                 DsError.ThrowExceptionForHR(hr);
 
                 IBaseFilter sourceFilter = null;
-                hr = m_FilterGraph.AddSourceFilter(FileName, FileName, out sourceFilter);
-                DsError.ThrowExceptionForHR( hr );
+                hr = m_FilterGraph.AddSourceFilter(FileName, "Ds.NET FileFilter", out sourceFilter);
+                DsError.ThrowExceptionForHR(hr);
+
+                // Hopefully this will be the video pin
+                IPin iPinOutSource = DsFindPin.ByDirection(sourceFilter, PinDirection.Output, 0);
 
                 // Get the SampleGrabber interface
-                m_sampGrabber = (ISampleGrabber) new SampleGrabber();
-                IBaseFilter baseGrabFlt = (IBaseFilter)	m_sampGrabber;
+                m_sampGrabber = (ISampleGrabber)new SampleGrabber();
+                IBaseFilter baseGrabFlt = (IBaseFilter)m_sampGrabber;
 
                 // Configure the Sample Grabber
                 ConfigureSampleGrabber(m_sampGrabber);
 
-                // Add it to the filter
-                hr = m_FilterGraph.AddFilter( baseGrabFlt, "Ds.NET Grabber" );
-                DsError.ThrowExceptionForHR( hr );
+                iPinInFilter = DsFindPin.ByDirection(baseGrabFlt, PinDirection.Input, 0);
+                iPinOutFilter = DsFindPin.ByDirection(baseGrabFlt, PinDirection.Output, 0);
 
-                // Connect the pieces together, use the default renderer
-                hr = icgb2.RenderStream(null, null, sourceFilter, baseGrabFlt, null);
-                DsError.ThrowExceptionForHR( hr );
+                // Add it to the filter
+                hr = m_FilterGraph.AddFilter(baseGrabFlt, "Ds.NET Grabber");
+                DsError.ThrowExceptionForHR(hr);
+
+                hr = m_FilterGraph.Connect(iPinOutSource, iPinInFilter);
+                DsError.ThrowExceptionForHR(hr);
+
+                // Get the default video renderer
+                ibfRenderer = (IBaseFilter)new VideoRendererDefault();
+
+                // Add it to the graph
+                hr = m_FilterGraph.AddFilter(ibfRenderer, "Ds.NET VideoRendererDefault");
+                DsError.ThrowExceptionForHR(hr);
+                iPinInDest = DsFindPin.ByDirection(ibfRenderer, PinDirection.Input, 0);
+
+                // Connect the graph.  Many other filters automatically get added here
+                hr = m_FilterGraph.Connect(iPinOutFilter, iPinInDest);
+                DsError.ThrowExceptionForHR(hr);
 
                 // Configure the Video Window
                 IVideoWindow videoWindow = m_FilterGraph as IVideoWindow;
@@ -226,6 +276,31 @@ namespace ShotsDetect
                     icgb2 = null;
                 }
             }
+        }
+
+        /// <summary> Read and store the properties </summary>
+        private void SaveSizeInfo(ISampleGrabber sampGrabber)
+        {
+            int hr;
+
+            // Get the media type from the SampleGrabber
+            AMMediaType media = new AMMediaType();
+            hr = sampGrabber.GetConnectedMediaType(media);
+            DsError.ThrowExceptionForHR(hr);
+
+            if ((media.formatType != FormatType.VideoInfo) || (media.formatPtr == IntPtr.Zero))
+            {
+                throw new NotSupportedException("Unknown Grabber Media Format");
+            }
+
+            // Grab the size info
+            VideoInfoHeader videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(media.formatPtr, typeof(VideoInfoHeader));
+            m_videoWidth = videoInfoHeader.BmiHeader.Width;
+            m_videoHeight = videoInfoHeader.BmiHeader.Height;
+            m_stride = m_videoWidth * (videoInfoHeader.BmiHeader.BitCount / 8);
+
+            DsUtils.FreeAMMediaType(media);
+            media = null;
         }
 
         // Configure the video window
@@ -268,6 +343,10 @@ namespace ShotsDetect
             DsUtils.FreeAMMediaType(media);
             media = null;
 
+            // Choose to call BufferCB instead of SampleCB
+            hr = m_sampGrabber.SetCallback(this, 1);
+            DsError.ThrowExceptionForHR(hr);
+
             // Configure the samplegrabber
             hr = sampGrabber.SetBufferSamples(true);
             DsError.ThrowExceptionForHR(hr);
@@ -294,13 +373,50 @@ namespace ShotsDetect
             }
         }
 
+        public void Start(double start, double end)
+        {
+            // If we aren't already playing (or shutting down)
+            if (m_State == GraphState.Stopped || m_State == GraphState.Paused)
+            {
+                m_mediaPosition.put_CurrentPosition(start);
+                m_mediaPosition.put_StopTime(end);
+                int hr = m_mediaCtrl.Run();
+                DsError.ThrowExceptionForHR(hr);
+
+                m_State = GraphState.Running;
+            }
+        }
+
+        public void setStartTime(double start)
+        {
+            m_mediaPosition.put_CurrentPosition(start);
+        }
+
+        public void setStartPosition(double start)
+        {
+            this.m_startPosition = start;
+        }
+
+        public void setEndTime(double end)
+        {
+            m_mediaPosition.put_StopTime(end);
+        }
+
+        public IMediaPosition getMediaPosition()
+        {
+            return m_mediaPosition;
+        }
+
         public void Stop()
         {
             // Can only Stop when playing or paused
             if (m_State == GraphState.Running || m_State == GraphState.Paused)
             {
+
                 int hr = m_mediaCtrl.Stop();
                 DsError.ThrowExceptionForHR(hr);
+
+                
 
                 m_State = GraphState.Stopped;
             }
@@ -357,8 +473,32 @@ namespace ShotsDetect
                     Marshal.ReleaseComObject(m_FilterGraph);
                     m_FilterGraph = null;
                 }
+
+                if (m_mediaPosition != null)
+                {
+                    Marshal.ReleaseComObject(m_mediaPosition);
+                    m_mediaPosition = null;
+                }
+
+                if (m_mediaEvent != null)
+                {
+                    Marshal.ReleaseComObject(m_mediaEvent);
+                    m_mediaEvent = null;
+                }
             }
             GC.Collect();
+        }
+
+        int ISampleGrabberCB.BufferCB(double SampleTime, IntPtr pBuffer, int BufferLen)
+        {
+            return 0;
+        }
+
+        /// <summary> sample callback, NOT USED. </summary>
+        int ISampleGrabberCB.SampleCB(double SampleTime, IMediaSample pSample)
+        {
+            Marshal.ReleaseComObject(pSample);
+            return 0;
         }
     }
 }

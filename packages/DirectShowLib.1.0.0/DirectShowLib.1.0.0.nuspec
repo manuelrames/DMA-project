@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>DirectShowLib</id>
+    <version>1.0.0</version>
+    <authors>Larry Beall</authors>
+    <owners>Larry Beall</owners>
+    <licenseUrl>https://www.gnu.org/licenses/lgpl-2.1.html</licenseUrl>
+    <projectUrl>https://github.com/larrybeall/DirectShowLib</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A port of DirectShowLib to .NET 4.5.  There have been no changes made to this from the available source that is available @ http://directshownet.sourceforge.net/</description>
+  </metadata>
+</package>
