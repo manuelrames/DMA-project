@@ -23,7 +23,7 @@ namespace ShotsDetect
         /// </summary>
         /// <param name="filepath">the path use to save the XML file</param>
         /// <param name="videoname">the name of the video</param>
-        public void createXML(String filepath, String videoname)
+        public void createXML(String filepath, String videoname, int method, double p1, double p2)
         {
             xmlDoc = new XmlDocument();
             xmlDoc.AppendChild(xmlDoc.CreateXmlDeclaration("1.0", "utf-8", null));
@@ -33,6 +33,19 @@ namespace ShotsDetect
             file.Value = videoname;
             rootNode.Attributes.Append(file);
             xmlDoc.AppendChild(rootNode);
+
+            XmlNode methodNode = xmlDoc.CreateElement("method");
+            XmlAttribute nr = xmlDoc.CreateAttribute("nr");
+            nr.Value = method.ToString();
+            methodNode.Attributes.Append(nr);
+            rootNode.AppendChild(methodNode);
+
+            XmlNode param1 = xmlDoc.CreateElement("param1");
+            param1.InnerText = p1.ToString();
+            methodNode.AppendChild(param1);
+            XmlNode param2 = xmlDoc.CreateElement("param2");
+            param2.InnerText = p2.ToString();
+            methodNode.AppendChild(param2);
 
             XmlNode shotsNode = xmlDoc.CreateElement("shots");
             rootNode.AppendChild(shotsNode);

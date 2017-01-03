@@ -48,6 +48,8 @@ namespace ShotsDetect
         private int m_videoHeight;
         private int m_stride;
 
+        public Bitmap bmp = null;
+
         // Used to grab current snapshots
         ISampleGrabber m_sampGrabber = null;
 
@@ -267,6 +269,9 @@ namespace ShotsDetect
                 m_mediaEvent = m_FilterGraph as IMediaEvent;
                 m_mediaCtrl = m_FilterGraph as IMediaControl;
                 m_mediaPosition = m_FilterGraph as IMediaPosition;
+
+                // Read and cache the image sizes
+                SaveSizeInfo(m_sampGrabber);
             }
             finally
             {
@@ -491,6 +496,8 @@ namespace ShotsDetect
 
         int ISampleGrabberCB.BufferCB(double SampleTime, IntPtr pBuffer, int BufferLen)
         {
+            bmp = new Bitmap(m_videoWidth, m_videoHeight, 3 * m_videoWidth, System.Drawing.Imaging.PixelFormat.Format24bppRgb, pBuffer);
+            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
             return 0;
         }
 

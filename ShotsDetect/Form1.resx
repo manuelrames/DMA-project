@@ -123,6 +123,33 @@
   <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>122, 17</value>
   </metadata>
+  <metadata name="saveFileDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>237, 17</value>
+  </metadata>
+  <data name="label1.Text" xml:space="preserve">
+    <value>How to use this application:
+Browse: select file
+Shot Detection: Different algorithms 
+     for shot detection
+Press on load in the Shot 
+     Detection window load the 
+     shots of the last algorithm in 
+     the main form.
+You're then able to play shots and 
+     add tags to the shots by 
+     selecting the shot.
+Retrieve Shots: type in a keyword 
+     in the textbox above,
+     and the application will show 
+     every shot with that tag.
+By pressing retrieve shot without 
+     any character in the textbox
+     you can go back to all the shots.
+Export Frame: exports the current 
+     frame that is playing
+Export as XML: export all the shots 
+     of a video in an XML-file</value>
+  </data>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>37</value>
   </metadata>

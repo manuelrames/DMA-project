@@ -49,8 +49,14 @@ namespace ShotsDetect
         /// saving all the shots produced in the session => are in the listbox lbPlay
         /// </summary>
         public List<Shot> lbShots;
+        ShotInfo[] m_ShotInfo = null;
 
-        ShotInfo[] m_Shotinfo = null;
+        public List<Shot> allShots;
+        ShotInfo[] all_ShotInfo = null;
+
+        public int algorithm;
+        public double parameter1;
+        public double parameter2;
 
         /// <summary>
         /// Browsing to the video file
@@ -172,16 +178,6 @@ namespace ShotsDetect
             ShowTime();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toolStripButton1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         // Go to shot detection form
         private void shotDetectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -199,11 +195,17 @@ namespace ShotsDetect
             while (lbPlay.Items.Count > 1)
                 lbPlay.Items.RemoveAt(lbPlay.Items.Count - 1);
 
-            if (m_Shotinfo != null)
-                m_Shotinfo = null;
+            if (m_ShotInfo != null)
+                m_ShotInfo = null;
+
+            if (all_ShotInfo != null)
+                all_ShotInfo = null;
+            allShots = new List<Shot>(shots);
+            all_ShotInfo = new ShotInfo[shots.Count];
+
 
             lbShots = new List<Shot>(shots);
-            m_Shotinfo = new ShotInfo[shots.Count];
+            m_ShotInfo = new ShotInfo[shots.Count];
 
             for (int i = 0; i < shots.Count; i++)
             {
@@ -212,7 +214,12 @@ namespace ShotsDetect
                 lbShots.Add(s);
 
                 //store the shot to ShotInfo for exporting xml file
-                m_Shotinfo[i].shot = s;
+                m_ShotInfo[i].shot = s;
+
+                allShots.Add(s);
+                all_ShotInfo[i].shot = s;
+                all_ShotInfo[i].tags = new List<string>();
+
             }
         }
 
@@ -224,7 +231,7 @@ namespace ShotsDetect
         private void lbPlay_SelectedIndexChanged(object sender, EventArgs e)
         {
             int index = lbPlay.SelectedIndex;
-            if (index != 0)
+            if (index > 0)
             {
                 m_play.setStartTime(lbShots[index - 1].start);
                 m_play.setEndTime(lbShots[index - 1].end);
@@ -233,12 +240,12 @@ namespace ShotsDetect
 
                 /* update the tags listbox info */
                 lbTags.Items.Clear();
-                if (m_Shotinfo[index - 1].tags != null)
+                if (m_ShotInfo[index - 1].tags != null)
                 {
                     /* add already existing tags to listbox */
-                    for (int i = 0; i < m_Shotinfo[index - 1].tags.Count; i++)
+                    for (int i = 0; i < m_ShotInfo[index - 1].tags.Count; i++)
                     {
-                        lbTags.Items.Add(m_Shotinfo[index - 1].tags[i]);
+                        lbTags.Items.Add(m_ShotInfo[index - 1].tags[i]);
                     }
                 }
             }
@@ -246,54 +253,61 @@ namespace ShotsDetect
             {
                 m_play.setStartTime(0.0);
                 m_play.setEndTime(duration);
-
                 m_play.setStartPosition(0.0);
+                lbTags.Items.Clear();
             }
         }
 
         private void btExport_Click(object sender, EventArgs e)
         {
-            string videoName;
-            ShotsXml xml = null;
-            var sfd = new SaveFileDialog();
-
-            char[] sep = { '\\' };
-            String[] list = tbFileName.Text.Split(sep);
-
-            sfd.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
-            sfd.Title = "Save an xml file";
-
-            /* get the video name */
-            videoName = list[list.Length - 1];
-
-            /* set the default file name */
-            sfd.FileName = videoName.Substring(0, videoName.Length - 4);
-
-            if (sfd.ShowDialog() == DialogResult.OK)
+            if (m_play != null)
             {
-                if (sfd.FileName != "")
-                {
-                    xml = new ShotsXml();
-                    xml.createXML(sfd.FileName, videoName);
+                string videoName;
+                ShotsXml xml = null;
+                var sfd = new SaveFileDialog();
 
-                    if (m_Shotinfo != null)
+                char[] sep = { '\\' };
+                String[] list = tbFileName.Text.Split(sep);
+
+                sfd.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
+                sfd.Title = "Save an xml file";
+
+                /* get the video name */
+                videoName = list[list.Length - 1];
+
+                /* set the default file name */
+                sfd.FileName = videoName.Substring(0, videoName.Length - 4);
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    if (sfd.FileName != "")
                     {
-                        for (int i = 0; i < m_Shotinfo.Length; i++)
+                        xml = new ShotsXml();
+                        xml.createXML(sfd.FileName, videoName, algorithm, parameter1, parameter2);
+
+                        if (m_ShotInfo != null)
                         {
-                            xml.addShot(m_Shotinfo[i].shot, m_Shotinfo[i].tags);
+                            for (int i = 0; i < m_ShotInfo.Length; i++)
+                            {
+                                xml.addShot(m_ShotInfo[i].shot, m_ShotInfo[i].tags);
+                            }
                         }
                     }
-                }
 
-                MessageBox.Show("Save File Successfully!");
+                    MessageBox.Show("Save File Successfully!");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please load a video file first!");
             }
         }
 
         private void btAdd_Click(object sender, EventArgs e)
         {
-            if (m_Shotinfo == null)
+            if (m_ShotInfo == null)
             {
-                MessageBox.Show("Please open a file, and excute shot detection!");
+                MessageBox.Show("Please open a file, and execute shot detection!");
             }
             else if (lbPlay.SelectedIndex <= 0)
             {
@@ -318,9 +332,17 @@ namespace ShotsDetect
 
                     /* use lbPlay's index to connect shot and tags */
                     int index = lbPlay.SelectedIndex - 1;
-                    if (m_Shotinfo[index].tags == null)
-                        m_Shotinfo[index].tags = new List<string>();
-                    m_Shotinfo[index].tags.Add(tbTags.Text);
+                    if (m_ShotInfo[index].tags == null)
+                        m_ShotInfo[index].tags = new List<string>();
+                    m_ShotInfo[index].tags.Add(tbTags.Text);
+                    for (int i = 0; i < all_ShotInfo.Length; i++)
+                    {
+                        if (all_ShotInfo[i].shot.frame1 == lbShots[index].frame1)
+                        {
+                            all_ShotInfo[i].tags.Add(tbTags.Text);
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -332,9 +354,77 @@ namespace ShotsDetect
             if (lbTags.SelectedIndex != -1)
             {
                 /* remove the tag both listbox and ShotInfo */
-                m_Shotinfo[lbPlay.SelectedIndex - 1].tags.RemoveAt(lbTags.SelectedIndex);
+                m_ShotInfo[lbPlay.SelectedIndex - 1].tags.RemoveAt(lbTags.SelectedIndex);
                 lbTags.Items.RemoveAt(lbTags.SelectedIndex);
             }
         }
+
+        private void bFrame_Click(object sender, EventArgs e)
+        {
+            if (m_play != null)
+            {
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    m_play.bmp.Save(saveFileDialog.FileName.ToString(), System.Drawing.Imaging.ImageFormat.Jpeg);
+                }
+            }
+            else
+            {
+                MessageBox.Show("First load a video, click on browse and play the file.");
+            }
+        }
+
+        private void bRetrieveShots_Click(object sender, EventArgs e)
+        {
+            if (m_play != null)
+            {
+                if (m_ShotInfo == null)
+                {
+                    MessageBox.Show("Please open a file, and execute shot detection!");
+                }
+                else
+                {
+                    if (tbTags.Text != "")
+                    {
+                        string word = tbTags.Text;
+                        lbShots = new List<Shot>();
+                        List<ShotInfo> templist = new List<ShotInfo>();
+                        for (int i = 0; i < all_ShotInfo.Length; i++)
+                        {
+                            if (all_ShotInfo[i].tags.Contains(word, StringComparer.OrdinalIgnoreCase))
+                            {
+                                templist.Add(all_ShotInfo[i]);
+                            }
+                        }
+                        m_ShotInfo = new ShotInfo[templist.Count];
+                        while (lbPlay.Items.Count > 1) lbPlay.Items.RemoveAt(1);
+                        for (int i = 0; i < m_ShotInfo.Length; i++)
+                        {
+                            m_ShotInfo[i] = templist[i];
+                            lbShots.Add(templist[i].shot);
+                            lbPlay.Items.Add(string.Format("Shot{0}:{1:N}-{2:N}  Frame #{3}-> #{4}", i + 1, templist[i].shot.start, templist[i].shot.end, templist[i].shot.frame1, templist[i].shot.frame2));
+                        }
+                    }
+                    else
+                    {
+                        lbShots = new List<Shot>();
+                        m_ShotInfo = new ShotInfo[all_ShotInfo.Length];
+                        while (lbPlay.Items.Count > 1) lbPlay.Items.RemoveAt(1);
+                        for (int i = 0; i < m_ShotInfo.Length; i++)
+                        {
+                            m_ShotInfo[i] = all_ShotInfo[i];
+                            lbShots.Add(all_ShotInfo[i].shot);
+                            lbPlay.Items.Add(string.Format("Shot{0}:{1:N}-{2:N}  Frame #{3}-> #{4}", i + 1, all_ShotInfo[i].shot.start, all_ShotInfo[i].shot.end, all_ShotInfo[i].shot.frame1, all_ShotInfo[i].shot.frame2));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please load a file first!");
+            }
+        }
+
+
     }
 }

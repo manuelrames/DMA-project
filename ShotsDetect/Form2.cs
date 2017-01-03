@@ -27,6 +27,9 @@ namespace ShotsDetect
 
         public List<Shot> shots = new List<Shot>();
 
+        public delegate void UpdateProgressBarDelegate(int progress);
+        public UpdateProgressBarDelegate UpdateProgressBar;
+
         public Form2()
         {
             InitializeComponent();
@@ -79,8 +82,8 @@ namespace ShotsDetect
                 tbP2.Enabled = true;
                 tbP2.Visible = true;
                 alg_expl.Text = "Calculate pixel-wise differences in video.";
-                p1_expl.Text = "Threshold 1: Treshold for pixel difference to count.";
-                p2_expl.Text = "Threshold 2: Treshold for 2 frames to be counted as a shot transition.\nHigh values result in less shot transitions to be found";
+                p1_expl.Text = "Threshold 1: Treshold for pixel difference to count. (50-100)";
+                p2_expl.Text = "Threshold 2: Treshold for 2 frames to be counted as a shot transition.\nHigh values result in less shot transitions to be found. (0.3-0.7)";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Motion Estimation"))
             {
@@ -90,45 +93,43 @@ namespace ShotsDetect
                 tbP2.Enabled = true;
                 tbP2.Visible = true;
                 alg_expl.Text = "Analyzes the motion between two consecutive frames";
-                p1_expl.Text = "Threshold 1: the difference between two frames";
+                p1_expl.Text = "Threshold 1: the difference between two frames. (7000-10000)";
                 p2_expl.Text = "Search method: 1 for simple block search, 2 for diamond search";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Global Histogram"))
             {
                 algorithm = State.gl_hist;
                 p1.Text = "Bhatt. Coeff.";
-                p2.Text = "";
+                p2.Text = "1 grey. 2 color";
                 //tbP1.Text = "0,7";
                 //tbP1.Enabled = false;
-                tbP2.Text = "0";
-                tbP2.Enabled = false;
-                tbP2.Visible = false;
+                tbP2.Enabled = true;
+                tbP2.Visible = true;
                 alg_expl.Text = "Calculate frame histogram differences in video.";
-                p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.";
-                p2_expl.Text = "";
+                p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.(0.7-0.9)";
+                p2_expl.Text = "Enter 1 for grey histograms or 2 for color histograms.";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Local Histogram"))
             {
                 algorithm = State.loc_hist;
                 p1.Text = "Bhatt. Coeff.";
-                p2.Text = "";
+                p2.Text = "1 grey. 2 color";
                 //tbP1.Text = "";
                 //tbP1.Enabled = false;
-                tbP2.Text = "0";
-                tbP2.Enabled = false;
-                tbP2.Visible = false;
+                tbP2.Enabled = true;
+                tbP2.Visible = true;
                 alg_expl.Text = "Calculate frame local histogram differences in video.";
-                p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.";
-                p2_expl.Text = "";
+                p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.(0.7-0.9)";
+                p2_expl.Text = "Enter 1 for grey histograms or 2 for color histograms.";
             }
             else if (cbAlgorithm.SelectedItem.ToString().Equals("Generalized"))
             {
                 algorithm = State.gen;
-                p1.Text = "";
-                p2.Text = "";
-                alg_expl.Text = "";
-                p1_expl.Text = "";
-                p2_expl.Text = "";
+                p1.Text = "Bhatt. Coeff.";
+                p2.Text = "search window";
+                alg_expl.Text = "Based on the global histogram algorithm.\nUsing search window to do backwards search for detecting dissolves";
+                p1_expl.Text = "Bhattacharyya Coefficient for histogram comparison.(>0.9)";
+                p2_expl.Text = "search window. (4-6)";
             }
         }
 
@@ -142,7 +143,6 @@ namespace ShotsDetect
         ///  (Use a different thread to do the algorithm?) </bug>
         private void button1_Click(object sender, EventArgs e)
         {
-            this.pbShotDetect.Visible = true;
             try
             {
                 m_detect = new ShotsDetect(Filename, this);
@@ -185,7 +185,7 @@ namespace ShotsDetect
 
                 //add the last shot
                 shots.Add(m_detect.createShot(m_detect.m_count - m_detect.frame_counter, 
-                            m_detect.m_count - 1, m_detect.current_start_shot, form1.duration));
+                            m_detect.m_count, m_detect.current_start_shot, form1.duration));
 
                 lock (this)
                 {
@@ -199,10 +199,6 @@ namespace ShotsDetect
             {
                 MessageBox.Show("Please fill in an integer or a double to execute this Shot Detection");
             }
-
-            this.pbShotDetect.Visible = false;
-            this.pbShotDetect.Value = 0;
-
         }
 
         private void frameTime_Tick(object sender, EventArgs e)
@@ -231,19 +227,12 @@ namespace ShotsDetect
             tbTime.Text = string.Format("{0:D2}:{1:D2}:{2:D2}", h, m, s);
         }
 
-        public ProgressBar getPbShotDetect()
-        {
-            return this.pbShotDetect;
-        }
-
         private void bLoad_Click(object sender, EventArgs e)
         {
             form1.updateLbPlay(this.shots);
-        }
-
-        private void pbShotDetect_Click(object sender, EventArgs e)
-        {
-
+            form1.algorithm = (int)algorithm;
+            form1.parameter1 = double.Parse(tbP1.Text);
+            form1.parameter2 = double.Parse(tbP2.Text);
         }
     }
 }

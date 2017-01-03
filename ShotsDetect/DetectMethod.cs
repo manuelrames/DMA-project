@@ -18,32 +18,37 @@ namespace ShotsDetect
         private double[] histogramFrame;
 
         /// <summary> Different block histograms for Grey Local Histogram Comparison algorithm
-        double[] block1GreyHistogram = new double[16];
-        double[] block2GreyHistogram = new double[16];
-        double[] block3GreyHistogram = new double[16];
-        double[] block4GreyHistogram = new double[16];
-        double[] block5GreyHistogram = new double[16];
-        double[] block6GreyHistogram = new double[16];
-        double[] block7GreyHistogram = new double[16];
-        double[] block8GreyHistogram = new double[16];
-        double[] block9GreyHistogram = new double[16];
+        private double[] block1Histogram;
+        private double[] block2Histogram;
+        private double[] block3Histogram;
+        private double[] block4Histogram;
+        private double[] block5Histogram;
+        private double[] block6Histogram;
+        private double[] block7Histogram;
+        private double[] block8Histogram;
+        private double[] block9Histogram;
 
-        /*
-        /// <summary> Different block histograms for Color Local Histogram Comparison algorithm
-        double[] block1ColorHistogram = new double[16*16*16];
-        double[] block2ColorHistogram = new double[16*16*16];
-        double[] block3ColorHistogram = new double[16*16*16];
-        double[] block4ColorHistogram = new double[16*16*16];
-        double[] block5ColorHistogram = new double[16*16*16];
-        double[] block6ColorHistogram = new double[16*16*16];
-        double[] block7ColorHistogram = new double[16*16*16];
-        double[] block8ColorHistogram = new double[16*16*16];
-        double[] block9ColorHistogram = new double[16*16*16];
-        */
+        // Variables used in GeneralizedSD method
+        int countGeneralizedSD;
+        IntPtr pFrame;
+        double[,] redTransition;
+        double[,] greenTransition;
+        double[,] blueTransition;
+        double[] redPrevious;
+        double[] greenPrevious;
+        double[] bluePrevious;
+        double[] redForward;
+        double[] greenForward;
+        double[] blueForward;
+        List<double> mutualInformation;
+        List<double> Icumm;
+        unsafe Byte*[] pointers;
+
+
 
         private const int BlockSize = 16;
 
-        public DetectMethod(int method, double p1, double p2, int videoHeight, int videoWidth)
+        public unsafe DetectMethod(int method, double p1, double p2, int videoHeight, int videoWidth)
         {
             m_method = method;
             m_p1 = p1;
@@ -62,8 +67,30 @@ namespace ShotsDetect
                     histogramFrame = new double[16 * 16 * 16];
                     break;
                 case 3:
+                    block1Histogram = new double[16*16*16];
+                    block2Histogram = new double[16*16*16];
+                    block3Histogram = new double[16*16*16];
+                    block4Histogram = new double[16*16*16];
+                    block5Histogram = new double[16*16*16];
+                    block6Histogram = new double[16*16*16];
+                    block7Histogram = new double[16*16*16];
+                    block8Histogram = new double[16*16*16];
+                    block9Histogram = new double[16*16*16];
                     break;
                 case 4:
+                    countGeneralizedSD = 1;
+                    redTransition = new double[256, 256];
+                    greenTransition = new double[256, 256];
+                    blueTransition = new double[256, 256];
+                    redPrevious = new double[256];
+                    greenPrevious = new double[256];
+                    bluePrevious = new double[256];
+                    redForward = new double[256];
+                    greenForward = new double[256];
+                    blueForward = new double[256];
+                    mutualInformation = new List<double>();
+                    pointers = new Byte*[30];
+                    Icumm = new List<double>();
                     break;
             }
         }
@@ -87,6 +114,7 @@ namespace ShotsDetect
                     result = LocalHistogramSD(pBuffer);
                     break;
                 case 4:
+                    result = GeneralizedSD(pBuffer);
                     break;
             }
 
@@ -374,7 +402,7 @@ namespace ShotsDetect
             return colorHistogram;
         }
 
-        /*
+        
         /// <summary>
         /// method that calculates the histogram of a frame once its pixel values are converted to the grey scale
         /// </summary>
@@ -391,23 +419,14 @@ namespace ShotsDetect
                 {
                     // Convert RGB values to grey scale values as follows: Y = 0.2126 R + 0.7152 G + 0.0722 B
                     // This corresponds to human eye sensibility to color. See: https://en.wikipedia.org/wiki/Luma_%28video%29 for more info.
-                    double greyValue = 0;
-                    for (int c = 0; c < 3; c++)
-                    {
-                        if (c == 0)
-                            greyValue += 0.2126 * *b;
-                        else if (c == 1)
-                            greyValue += 0.7152 * *b;
-                        else if (c == 2)
-                            greyValue += 0.0722 * *b;
-                        b++;
-                    }
+                    double greyValue = getGreyValue(b);
+                    b += 3;
+
                     // Increase the histogram bin element position found
                     greyHistogram[getBinLevel(greyValue)]++;
 
                     //Reset variable greyValue
                     greyValue = 0;
-
                 }
             }
 
@@ -419,7 +438,7 @@ namespace ShotsDetect
 
             return greyHistogram;
         } 
-        */
+        
 
         /// <summary>
         /// method that use the Global Histogram Comparison algorithm to detect if 2 consecutives frames belong to different shots.
@@ -429,16 +448,21 @@ namespace ShotsDetect
         {
             Byte* b = (byte*)pBuffer;
             double threshold1 = m_p1;
-            //double threshold2 = p2;
+            // Threshold p2 is used to specify if the user wants to use color or grey histograms to detect the shots. 1 for grey; 2 for color.
+            double threshold2 = m_p2;
             int numberOfBins = 16;
+            double[] histogramBuffer = new double[numberOfBins];
 
-            // Calculate the grey histogram
-            //double[] histogramFrame = calculateHistogram(b0, numberOfBins);
-            //double[] histogramBuffer = calculateGreyHistogram(b, numberOfBins);
-
-            // Calculate the color histogram
-            //double[] histogramFrame = calculateColorHistogram(b0, numberOfBins);
-            double[] histogramBuffer = calculateColorHistogram(b, numberOfBins);
+            if (m_p2 == 1)
+            {
+                // Calculate the grey histogram
+                histogramBuffer = calculateGreyHistogram(b, numberOfBins);
+            }
+            else if (m_p2 == 2)
+            {
+                // Calculate the color histogram
+                histogramBuffer = calculateColorHistogram(b, numberOfBins);
+            }
 
             // Calculate the difference between histograms using Bhattacharyya distance
             double similarity = 0;
@@ -505,6 +529,58 @@ namespace ShotsDetect
             return blockGreyHistogram;
         }
 
+        private unsafe double[] calculateBlockColorHistogram(Byte* b, int numberOfBins, int xBlockSize, int yBlockSize)
+        {
+            double[] blockColorHistogram = new double[(int)Math.Pow((double)numberOfBins,3.0)];
+            // tr, tg and tg contain de values of each Red, Green and Blue, respectively, of each pixel of the frame at a certain time
+            int tr = 0;
+            int tg = 0;
+            int tb = 0;
+            // We need to divide the frame in 9 different blocks, so the pointer must be changed following the architecture of the buffered image
+            int count = 0;
+            for (int x = 0; x < xBlockSize; x++)
+            {
+                for (int y = 0; y < yBlockSize; y++)
+                {
+                    // As we want squared blocks, when the pointer is at the end of a row of the block the pointer 
+                    // has to be changed to the next block row as follows (only valid if the frame is divided in 9 blocks)
+                    if (count == xBlockSize)
+                    {
+                        b += 2 * xBlockSize;
+                        count = 0;
+                    }
+
+                    // Variable used to store the values obteined in the matrix colorHistogram
+                    int count2 = 0;
+                    for (int c = 0; c < 3; c++)
+                    {
+                        if (c == 0)
+                            tr = getBinLevel((double)*b);
+                        else if (c == 1)
+                            tg = getBinLevel((double)*b);
+                        else if (c == 2)
+                            tb = getBinLevel((double)*b);
+                        b++;
+                    }
+                    // The following arithmetic operations are used to store a 3D histogram (so 3D matrix) in an unidimensional matrix
+                    // with the same number of elements as the 3D matrix
+                    count2 = tr + tg * 16 + tb * 16 * 16;
+                    blockColorHistogram[count2]++;
+
+                    //Increment the counter
+                    count++;
+                }
+            }
+
+            // Normalize the color histogram by dividing each element between the total amount of elements
+            for (int i = 0; i < blockColorHistogram.Length; i++)
+            {
+                blockColorHistogram[i] = blockColorHistogram[i] / (xBlockSize * yBlockSize);
+            }
+
+            return blockColorHistogram;
+        }
+
         /// <summary>
         /// method that use the Local Histogram Comparison algorithm to detect if 2 consecutives frames belong to different shots.
         /// </summary>
@@ -513,8 +589,11 @@ namespace ShotsDetect
         {
             Byte* b = (byte*)pBuffer;
             double threshold1 = m_p1;
+            // Variable used to decide if the detection will be made using grey or color histograms. 1 for grey and 2 for color.
+            double threshold2 = m_p2;
             int numberOfBins = 16;
             int numberOfBlocks = 9;
+            double[] blockHistogram = new double[numberOfBins];
 
             // We need to divide the frame into 9 different blocks and then compute the histogram for each of those blocks
             // IMPORTANT: If the height and width are not dividable by 3 we need to implement a way not to lose part of the frame!!!!
@@ -540,8 +619,15 @@ namespace ShotsDetect
                     b += (3 * xBlockSize * yBlockSize) * 3 - 2 * xBlockSize;
                 }
 
-                double[] blockGreyHistogram = calculateBlockGreyHistogram(b, numberOfBins, xBlockSize, yBlockSize);
-
+                if (m_p2 == 1) 
+                {
+                    blockHistogram = calculateBlockGreyHistogram(b, numberOfBins, xBlockSize, yBlockSize);
+                }
+                else if (m_p2 == 2)
+                {
+                    blockHistogram = calculateBlockColorHistogram(b, numberOfBins, xBlockSize, yBlockSize);
+                }
+           
                 // Calculate the difference between histograms using Bhattacharyya distance
                 double similarity = 0;
                 // We store each block histogram of the buffered frame into the block#GreyHistogram variables. By doing this we don't need
@@ -549,46 +635,44 @@ namespace ShotsDetect
                 switch (i)
                 {
                     case 0:
-                        similarity = compareBothHistograms(block1GreyHistogram, blockGreyHistogram);
-                        block1GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block1Histogram, blockHistogram);
+                        block1Histogram = blockHistogram;
                         break;
                     case 1:
-                        similarity = compareBothHistograms(block2GreyHistogram, blockGreyHistogram);
-                        block2GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block2Histogram, blockHistogram);
+                        block2Histogram = blockHistogram;
                         break;
                     case 2:
-                        similarity = compareBothHistograms(block3GreyHistogram, blockGreyHistogram);
-                        block3GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block3Histogram, blockHistogram);
+                        block3Histogram = blockHistogram;
                         break;
                     case 3:
-                        similarity = compareBothHistograms(block4GreyHistogram, blockGreyHistogram);
-                        block4GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block4Histogram, blockHistogram);
+                        block4Histogram = blockHistogram;
                         break;
                     case 4:
-                        similarity = compareBothHistograms(block5GreyHistogram, blockGreyHistogram);
-                        block5GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block5Histogram, blockHistogram);
+                        block5Histogram = blockHistogram;
                         break;
                     case 5:
-                        similarity = compareBothHistograms(block6GreyHistogram, blockGreyHistogram);
-                        block6GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block6Histogram, blockHistogram);
+                        block6Histogram = blockHistogram;
                         break;
                     case 6:
-                        similarity = compareBothHistograms(block7GreyHistogram, blockGreyHistogram);
-                        block7GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block7Histogram, blockHistogram);
+                        block7Histogram = blockHistogram;
                         break;
                     case 7:
-                        similarity = compareBothHistograms(block8GreyHistogram, blockGreyHistogram);
-                        block8GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block8Histogram, blockHistogram);
+                        block8Histogram = blockHistogram;
                         break;
                     case 8:
-                        similarity = compareBothHistograms(block9GreyHistogram, blockGreyHistogram);
-                        block9GreyHistogram = blockGreyHistogram;
+                        similarity = compareBothHistograms(block9Histogram, blockHistogram);
+                        block9Histogram = blockHistogram;
                         break;
                 }
-
                 // Increment totalSimilarity with each block histogram similarity weighted with the number of blocks
-                totalSimilarity = similarity;
-
+                totalSimilarity += similarity/9;
             }
 
             // If similarity is above the threshold p1, then the two frames correspond to the same shot so
@@ -598,9 +682,182 @@ namespace ShotsDetect
             else
                 return false;
         }
-
-        public void GeneralizedSD()
+        /// <summary>
+        /// this method uses Mutual Information and Canny Edge Detector to detect different shots
+        /// All the auxiliary methods needed for this claculations are below the main method.
+        /// For more information, see: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4722250
+        /// </summary>
+        /// <param name="pBuffer"></param>
+        /// <returns></returns>
+        public unsafe bool GeneralizedSD(IntPtr pBuffer)
         {
+            Byte* b = (byte*)pBuffer;
+            Byte* b0 = (byte*)pFrame;
+            double threshold1 = m_p1;
+            double threshold2 = m_p2;
+            double mutualInfo = 0;
+            int windowSize = 30;
+
+            // if statement created to avoid an error when pBuffer is on the first frame.
+            if (countGeneralizedSD == 0)
+            {
+                pointers[countGeneralizedSD] = b;
+                countGeneralizedSD++;
+                calculateColorTransition(b, b0, countGeneralizedSD);
+                pFrame = pBuffer;
+                return true;
+            }
+            // else if statement used from the second frame until the 15th
+            else if (countGeneralizedSD > 0 && countGeneralizedSD < windowSize / 2 - 1)
+            {
+                // First we need to calculate the 3 matrices that contain how many pixels of each grey value
+                // changes to another certain grey value, for all the grey values of the frame.
+                calculateColorTransition(b, b0, countGeneralizedSD);
+
+                // Calculate the mutual information value between two frames
+                mutualInfo = calculateMutualInformation(redTransition, greenTransition, blueTransition);
+                mutualInformation.Add(mutualInfo);
+
+                // Store the colorForward matrices for the next grabbed frame
+                redPrevious = redForward;
+                greenPrevious = greenForward;
+                bluePrevious = blueForward;
+
+                // Store the pointer
+                pointers[countGeneralizedSD] = b;
+                countGeneralizedSD++;
+
+                if (countGeneralizedSD >= 15 && countGeneralizedSD < pointers.Length)
+                {
+                    // For loop used to store pointers for futher calculation of Icumm
+                    for (int i = 15; i < pointers.Length; i++)
+                    {
+                        b += m_videoHeight * m_videoWidth;
+                        pointers[i] = b;
+                    }
+                }
+            }
+            // Procedure from the 15th frame, when we can start computing Icumm apart from Mutual Information
+            else if (countGeneralizedSD >= windowSize)
+            {
+                
+            }
+
+            return true;
+        }
+
+        public unsafe void calculateColorTransition(Byte* b, Byte* b0, int countGeneralizedSD)
+        {
+            // In case is the first frame, we only need to calculate the colorForward matrices
+            // to store them after as colorPrevious matrices and then be used from the second frame
+            if (countGeneralizedSD == 0)
+            {
+                for (int y = 0; y < m_videoHeight; y++)
+                {
+                    for (int x = 0; x < m_videoWidth; x++)
+                    {
+                        for (int c = 0; c < 3; c++)
+                        {
+                            if (c == 0)
+                            {
+                                redForward[*b] += 1 / (m_videoHeight * m_videoWidth);
+                            }
+                            else if (c == 1)
+                            {
+                                greenForward[*b] += 1 / (m_videoHeight * m_videoWidth);
+                            }
+                            else if (c == 2)
+                            {
+                                blueForward[*b] += 1 / (m_videoHeight * m_videoWidth);
+                            }
+                            b++;
+                        }
+                    }
+                }
+                return;
+            }
+            else
+            {
+                // We first reset the matrices to 0
+                Array.Clear(redTransition, 0, 256 * 256);
+                Array.Clear(greenTransition, 0, 256 * 256);
+                Array.Clear(blueTransition, 0, 256 * 256);
+                Array.Clear(redForward, 0, 256);
+                Array.Clear(greenForward, 0, 256);
+                Array.Clear(blueForward, 0, 256);
+
+                // To make the calculation more efficient, we normalize the matrices as wemake the calculations
+                for (int y = 0; y < m_videoHeight; y++)
+                {
+                    for (int x = 0; x < m_videoWidth; x++)
+                    {
+                        for (int c = 0; c < 3; c++)
+                        {
+                            if (c == 0)
+                            {
+                                redTransition[*b, *b0] += 1 / (m_videoHeight * m_videoWidth);
+                                redForward[*b] += 1 / (m_videoHeight * m_videoWidth);
+                            }
+                            else if (c == 1)
+                            {
+                                greenTransition[*b, *b0] += 1 / (m_videoHeight * m_videoWidth);
+                                greenForward[*b] += 1 / (m_videoHeight * m_videoWidth);
+                            }
+                            else if (c == 2)
+                            {
+                                blueTransition[*b, *b0] += 1 / (m_videoHeight * m_videoWidth);
+                                blueForward[*b] += 1 / (m_videoHeight * m_videoWidth);
+                            }
+                            b++;
+                            b0++;
+                        }
+                    }
+                }
+            }
+        }
+
+        public double calculateMutualInformation(double[,] redTransition, double[,] greenTransition, double[,] blueTransition)
+        {
+            double mutualInfo = 0;
+            double redMutualInfo = 0;
+            double greenMutualInfo = 0;
+            double blueMutualInfo = 0;
+
+            for (int i = 0; i < redTransition.GetLength(0); i++)
+            {
+                for (int j = 0; j < redTransition.GetLength(1); j++)
+                {
+                    redMutualInfo += redTransition[i, j] * Math.Log10(redTransition[i, j] / (redPrevious[i] * redForward[j]));
+                    greenMutualInfo += greenTransition[i, j] * Math.Log10(greenTransition[i, j] / (greenPrevious[i] * greenForward[j]));
+                    blueMutualInfo += blueTransition[i, j] * Math.Log10(blueTransition[i, j] / (bluePrevious[i] * blueForward[j]));
+                }
+            }
+
+            mutualInfo = redMutualInfo + greenMutualInfo + blueMutualInfo;
+
+            return mutualInfo;
+        }
+
+        public double calculateJointEntropy(double[,] redTransition, double[,] greenTransition, double[,] blueTransition)
+        {
+            double jointEnt = 0;
+            double redJointEnt = 0;
+            double greenJointEnt = 0;
+            double blueJointEnt = 0;
+
+            for (int i = 0; i < redTransition.GetLength(0); i++)
+            {
+                for (int j = 0; j < redTransition.GetLength(1); j++)
+                {
+                    redJointEnt += redTransition[i, j] * Math.Log10(redTransition[i, j]);
+                    greenJointEnt += greenTransition[i, j] * Math.Log10(greenTransition[i, j]);
+                    blueJointEnt += blueTransition[i, j] * Math.Log10(blueTransition[i, j]);
+                }
+            }
+
+            jointEnt = redJointEnt + greenJointEnt + blueJointEnt;
+
+            return jointEnt;
         }
     }
 }

@@ -44,9 +44,9 @@ namespace ShotsDetect
         private IFilterGraph2 m_FilterGraph = null;
         private IMediaControl m_MediaCtrl = null;
         private IMediaEvent m_MediaEvent = null;
-        private IMediaPosition m_MediaPosition = null;
 
         private DetectMethod m_detect;
+        private SelectMethod m_select;
 
         /// <summary> Dimensions of the image, calculated once in constructor. </summary>
         private int m_videoWidth;
@@ -141,7 +141,6 @@ namespace ShotsDetect
             m_FilterGraph = new FilterGraph() as IFilterGraph2;
             m_MediaCtrl = m_FilterGraph as IMediaControl;
             m_MediaEvent = m_FilterGraph as IMediaEvent;
-            m_MediaPosition = m_FilterGraph as IMediaPosition;
 
             IMediaFilter m_mediaFilter = m_FilterGraph as IMediaFilter;
 
@@ -287,7 +286,10 @@ namespace ShotsDetect
         {
             bool is_shot = false;
 
-            is_shot = m_detect.doDetect(pBuffer);
+            if (m_count == 850)
+                m_count = 850;
+
+            is_shot = m_detect.DetectShot(pBuffer);
 
             if (is_shot)
             {
@@ -306,11 +308,6 @@ namespace ShotsDetect
             m_count++;
             frame_counter++;
             this.previousTime = SampleTime;
-
-            // BUG: progressbar doesn't change value :(
-            //double duration;
-            //m_MediaPosition.get_StopTime(out duration);
-            //form2.getPbShotDetect().Value = (int)(100 * SampleTime / duration);
 
             return 0;
         }
@@ -347,7 +344,9 @@ namespace ShotsDetect
         {
             int hr;
 
-            m_detect = new DetectMethod(algorithm, p1, p2, m_videoHeight, m_videoWidth);
+            m_select = new SelectMethod();
+            m_detect = m_select.getMethod(algorithm, p1, p2, m_videoHeight, m_videoWidth);
+            //m_detect = new DetectMethod(algorithm, p1, p2, m_videoHeight, m_videoWidth);
             hr = m_MediaCtrl.Run();
             DsError.ThrowExceptionForHR(hr);
         }

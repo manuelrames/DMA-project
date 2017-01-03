@@ -48,7 +48,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DetectMethod.cs" />
+    <Compile Include="DetectMethod\DetectMethod.cs" />
+    <Compile Include="DetectMethod\GeneralizedSD.cs" />
+    <Compile Include="DetectMethod\GlobalHistogramSD.cs" />
+    <Compile Include="DetectMethod\LocalHistogramSD.cs" />
+    <Compile Include="DetectMethod\MotionEstimationSD.cs" />
+    <Compile Include="DetectMethod\PixelDifferenceSD.cs" />
+    <Compile Include="DetectMethod\SelectMethod.cs" />
     <Compile Include="ShotsXml.cs" />
     <Compile Include="ShotsDetect.cs" />
     <Compile Include="Form1.cs">
@@ -104,6 +110,7 @@
   <ItemGroup>
     <None Include="form1_background.jpg" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
